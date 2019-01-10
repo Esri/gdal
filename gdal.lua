@@ -1536,6 +1536,38 @@ project "gdal"
       }
 
     -- -------------------------------------------------------------
+    -- configuration { "winuwp_debug","ARM64" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_winuwp_arm64_debug.lua")
+
+    -- project specific configuration settings
+
+    configuration { "winuwp_debug","ARM64" }
+
+      defines {
+        "KDU_NO_NEON", -- neon intrinsics for Windows is not supported
+      }
+
+    -- -------------------------------------------------------------
+    -- configuration { "winuwp_release","ARM64" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_winuwp_arm64_release.lua")
+
+    -- project specific configuration settings
+
+    configuration { "winuwp_release","ARM64" }
+
+      defines {
+        "KDU_NO_NEON", -- neon intrinsics for Windows is not supported
+      }
+
+    -- -------------------------------------------------------------
   end
 
   if (_IS_QT) then
