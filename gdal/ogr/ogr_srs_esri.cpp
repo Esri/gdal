@@ -1491,6 +1491,9 @@ OGRErr OGRSpatialReference::morphToESRI()
     GetRoot()->applyRemapper( "DATUM",
                               papszDatumMapping + 2, papszDatumMapping + 1, 3 );
 
+    GetRoot()->applyRemapper( "DATUM",
+                              apszDatumNameMapping + 0, apszDatumNameMapping + 1, 2 );
+
     const char *pszProjCSName      = nullptr;
     OGR_SRSNode *poProjCS          = nullptr;
     OGR_SRSNode *poProjCSNodeChild = nullptr;
@@ -1777,6 +1780,11 @@ OGRErr OGRSpatialReference::morphToESRI()
         GetRoot()->applyRemapper("SPHEROID",
                                  apszSpheroidMapping + 0,
                                  apszSpheroidMapping + 1,
+                                 2);
+
+        GetRoot()->applyRemapper("SPHEROID",
+                                 apszSpheroidNameMapping + 0,
+                                 apszSpheroidNameMapping + 1,
                                  2);
     }
 
