@@ -65,7 +65,7 @@
 
    #define LT_DEPRECATED(NEW)
 
-#elif defined(_MSC_VER) &&  (1300 <= _MSC_VER && _MSC_VER <= 1919)
+#elif defined(_MSC_VER) &&  (1300 <= _MSC_VER && _MSC_VER <= 1921)
    #define LT_COMPILER_MS 1
    #if _MSC_VER < 1400
       #define LT_COMPILER_MS7 1
@@ -81,8 +81,10 @@
       #define LT_COMPILER_MS12 1
    #elif _MSC_VER < 1910
       #define LT_COMPILER_MS14 1
-   #else
+   #elif _MSC_VER < 1920
       #define LT_COMPILER_MS17 1
+   #else
+      #define LT_COMPILER_MS19 1
    #endif
 
    #if _MSC_VER >= 1400
