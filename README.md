@@ -1,5 +1,8 @@
 GDAL - Geospatial Data Abstraction Library
 ====
+This fork of GDAL is used by the ArcGIS runtime SDKs product line exclusively. The ArcGIS Pro product line uses a custom
+internal version of GDAL for each release. For more information on ArcGIS Pro's gdal, please find the appropriate
+[documentation](https://www.arcgis.com/home/search.html?t=content&q=tags%3A%22GDAL%22&start=1&num=20&focus=applications)
 
 [![Build Status](https://travis-ci.com/OSGeo/gdal.svg?branch=master)](https://travis-ci.com/OSGeo/gdal)
 [![Build status](https://ci.appveyor.com/api/projects/status/jtwx0pcr0y01i17p/branch/master?svg=true)](https://ci.appveyor.com/project/OSGeo/gdal)
