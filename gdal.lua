@@ -1503,6 +1503,10 @@ project "gdal"
         intel_intrinsic_defines,
       }
 
+      buildoptions {
+        "/wd4789", -- Silences buffer overrun warning which causes errors during LTCG with Ob3 optimizations on
+      }
+
     -- -------------------------------------------------------------
     -- configuration { "winuwp_debug","ARM" }
     -- -------------------------------------------------------------
