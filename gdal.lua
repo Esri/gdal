@@ -1144,11 +1144,7 @@ project "gdal"
 
     -- project specific configuration settings
 
-    configuration { "linux" }
-
-      defines {
-        intel_intrinsic_defines,
-      }
+    -- configuration { "linux" }
 
     -- -------------------------------------------------------------
     -- configuration { "linux","Debug","x64" }
@@ -1160,7 +1156,11 @@ project "gdal"
 
     -- project specific configuration settings
 
-    -- configuration { "linux","Debug","x64" }
+    configuration { "linux","Debug","x64" }
+
+      defines {
+        intel_intrinsic_defines,
+      }
 
     -- -------------------------------------------------------------
     -- configuration { "linux","Release","x64" }
@@ -1172,7 +1172,43 @@ project "gdal"
 
     -- project specific configuration settings
 
-    -- configuration { "linux","Release","x64" }
+    configuration { "linux","Release","x64" }
+
+      defines {
+        intel_intrinsic_defines,
+      }
+
+    -- -------------------------------------------------------------
+    -- configuration { "linux", "Debug", "ARM64" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_linux_arm64_debug.lua")
+
+    -- project specific configuration settings
+
+    configuration { "linux", "Debug", "ARM64" }
+
+      defines {
+        "KDU_NO_NEON", -- neon intrinsics for linux arm64 are not supported
+      }
+
+    -- -------------------------------------------------------------
+    -- configuration { "linux", "Release", "ARM64" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_linux_arm64_release.lua")
+
+    -- project specific configuration settings
+
+    configuration { "linux", "Release", "ARM64" }
+
+      defines {
+        "KDU_NO_NEON", -- neon intrinsics for linux arm64 are not supported
+      }
 
     -- -------------------------------------------------------------
   end
