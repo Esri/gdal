@@ -1258,6 +1258,122 @@ project "gdal"
     -- -------------------------------------------------------------
   end
 
+  if (_PLATFORM_COCOA) then
+    -- -------------------------------------------------------------
+    -- configuration { "cocoa*" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_cocoa.lua")
+
+    -- project specific configuration settings
+
+    configuration { "cocoa*" }
+
+      defines {
+        cocoa_defines,
+      }
+
+    -- -------------------------------------------------------------
+    -- configuration { "cocoa_arm64_debug" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_cocoa_arm64_debug.lua")
+
+    -- project specific configuration settings
+
+    configuration { "cocoa_arm64_debug" }
+
+      defines {
+        neon_defines,
+      }
+
+    -- -------------------------------------------------------------
+    -- configuration { "cocoa_arm64_release" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_cocoa_arm64_release.lua")
+
+    -- project specific configuration settings
+
+    configuration { "cocoa_arm64_release" }
+
+      defines {
+        neon_defines,
+      }
+
+    -- -------------------------------------------------------------
+    -- configuration { "cocoa_sim64_debug" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_cocoa_sim64_debug.lua")
+
+    -- project specific configuration settings
+
+    configuration { "cocoa_sim64_debug" }
+
+      defines {
+        intel_intrinsic_defines,
+      }
+
+    -- -------------------------------------------------------------
+    -- configuration { "cocoa_sim64_release" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_cocoa_sim64_release.lua")
+
+    -- project specific configuration settings
+
+    configuration { "cocoa_sim64_release" }
+
+      defines {
+        intel_intrinsic_defines,
+      }
+
+    -- -------------------------------------------------------------
+    -- configuration { "cocoa_x64_debug" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_cocoa_x64_debug.lua")
+
+    -- project specific configuration settings
+
+    configuration { "cocoa_x64_debug" }
+
+      defines {
+        intel_intrinsic_defines,
+      }
+
+    -- -------------------------------------------------------------
+    -- configuration { "cocoa_x64_release" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_cocoa_x64_release.lua")
+
+    -- project specific configuration settings
+
+    configuration { "cocoa_x64_release" }
+
+      defines {
+        intel_intrinsic_defines,
+      }
+
+    -- -------------------------------------------------------------
+  end
+
   if (_PLATFORM_IOS) then
     -- -------------------------------------------------------------
     -- configuration { "ios*" }
