@@ -20,6 +20,10 @@ project "gdal"
   }
 
   files {
+    "gdal/gcore/**.h",
+    "gdal/ogr/**.h",
+    "gdal/port/**.h",
+
     -- "gdal/alg/contour.cpp",
     "gdal/alg/delaunay.c",
     "gdal/alg/gdalapplyverticalshiftgrid.cpp",
