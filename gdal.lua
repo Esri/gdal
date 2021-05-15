@@ -1134,6 +1134,17 @@ end
 if (_PLATFORM_MACOS) then
   defines {
     cocoa_defines,
+  }
+
+  configuration { "ARM64" }
+
+  defines {
+    neon_defines,
+  }
+
+  configuration { "x64" }
+
+  defines {
     intel_intrinsic_defines,
   }
 end
