@@ -1152,6 +1152,23 @@ if (_PLATFORM_MACOS) then
 end
 
 if (_PLATFORM_WINDOWS) then
+  configuration { "ARM64" }
+
+  defines {
+    "KDU_NO_NEON", -- neon intrinsics for Windows is not supported
+  }
+
+  configuration { "x64" }
+
+  defines {
+    intel_intrinsic_defines,
+  }
+
+  configuration { "x32" }
+
+  defines {
+    intel_intrinsic_defines,
+  }
 end
 
 if (_PLATFORM_WINUWP) then
