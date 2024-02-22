@@ -196,7 +196,7 @@ includedirs {
   _3RDPARTY_DIR .. "/mrsid/mrsid-source-sdk/mrsid",
   _3RDPARTY_DIR .. "/mrsid/mrsid-source-sdk/utils",
   _3RDPARTY_DIR .. "/sqlite",
-  _3RDPARTY_DIR .. "/zlib",
+  _3RDPARTY_DIR .. "/zlib-ng",
 }
 
 files {
