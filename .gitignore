@@ -10,6 +10,7 @@ Makefile
 ###########################
 *.vcxproj*
 *.sln
+*.make
 Makefile
 
 # OS generated files #
