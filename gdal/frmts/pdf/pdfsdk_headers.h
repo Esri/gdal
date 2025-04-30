@@ -29,7 +29,7 @@
 #ifndef PDFSDK_HEADERS_H
 #define PDFSDK_HEADERS_H
 
-/* We avoid to include cpl_port.h directly or indirectly */
+ /* We avoid to include cpl_port.h directly or indirectly */
 #if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && !defined(_MSC_VER))
 #pragma GCC system_header
 #endif
@@ -106,7 +106,7 @@
 #error PDF driver compiled with PDFium library requires working threads with mutex locking!
 #endif
 
-// Linux ignores timeout, Windows returns if not INFINITE
+ // Linux ignores timeout, Windows returns if not INFINITE
 #ifdef WIN32
 #define  PDFIUM_MUTEX_TIMEOUT     INFINITE
 #else
@@ -115,10 +115,15 @@
 
 #include <cstring>
 //#include <fpdfsdk/include/fsdk_define.h>
-#include <fpdfview.h>
-#include <core/include/fpdfapi/fpdf_page.h>
-#include <core/include/fpdfapi/fpdf_objects.h>
-#include "fpdfsdk/include/fsdk_rendercontext.h"
+#include <public/fpdfview.h>
+//#include <core/include/fpdfapi/fpdf_page.h>
+#include <core/fpdfapi/page/cpdf_page.h>
+//#include <core/include/fpdfapi/fpdf_objects.h>
+#include <core/fpdfapi/parser/cpdf_object.h>
+//#include "fpdfsdk/include/fsdk_rendercontext.h"
+#include "core/fpdfapi/render/cpdf_rendercontext.h"
+#include "core/fpdfapi/render/cpdf_pagerendercontext.h"
+
 #endif // HAVE_PDFIUM
 
 #endif

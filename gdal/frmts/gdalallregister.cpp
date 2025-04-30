@@ -32,14 +32,14 @@
 #include "ogrsf_frmts.h"
 
 #ifdef GNM_ENABLED
-   #include "gnm_frmts.h"
+#include "gnm_frmts.h"
 #endif
 
 CPL_CVSID("$Id$")
 
 #ifdef notdef
 // we may have a use for this some day
-static char *szConfiguredFormats = "GDAL_FORMATS";
+static char* szConfiguredFormats = "GDAL_FORMATS";
 #endif
 
 /************************************************************************/
@@ -105,7 +105,7 @@ void CPL_STDCALL GDALAllRegister()
 #endif
 
 #ifdef FRMT_aigrid
-//    GDALRegister_AIGrid2();
+    //    GDALRegister_AIGrid2();
     GDALRegister_AIGrid();
 #endif
 
@@ -399,12 +399,12 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_mrf();
 #endif
 
-/* -------------------------------------------------------------------- */
-/*      Put raw formats at the end of the list. These drivers support   */
-/*      various ASCII-header labeled formats, so the driver could be    */
-/*      confused if you have files in some of above formats and such    */
-/*      ASCII-header in the same directory.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Put raw formats at the end of the list. These drivers support   */
+    /*      various ASCII-header labeled formats, so the driver could be    */
+    /*      confused if you have files in some of above formats and such    */
+    /*      ASCII-header in the same directory.                             */
+    /* -------------------------------------------------------------------- */
 
 #ifdef FRMT_raw
     GDALRegister_PNM();
@@ -439,10 +439,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ARG();
 #endif
 
-/* -------------------------------------------------------------------- */
-/*      Our test for the following is weak or expensive so we try       */
-/*      them last.                                                      */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Our test for the following is weak or expensive so we try       */
+    /*      them last.                                                      */
+    /* -------------------------------------------------------------------- */
 
 #ifdef FRMT_rik
     GDALRegister_RIK();
@@ -464,7 +464,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_DODS();
 #endif
 
-/* Register KEA before HDF5 */
+    /* Register KEA before HDF5 */
 #ifdef FRMT_kea
     GDALRegister_KEA();
 #endif
@@ -571,9 +571,9 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_HTTP();
 #endif
 
-/* -------------------------------------------------------------------- */
-/*      Deregister any drivers explicitly marked as suppressed by the   */
-/*      GDAL_SKIP environment variable.                                 */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Deregister any drivers explicitly marked as suppressed by the   */
+    /*      GDAL_SKIP environment variable.                                 */
+    /* -------------------------------------------------------------------- */
     GetGDALDriverManager()->AutoSkipDrivers();
 }
