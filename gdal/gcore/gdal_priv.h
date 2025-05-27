@@ -463,9 +463,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
   public:
      ~GDALDataset() override;
 
-    double adfGPTS[8];
-    double adfLPTS[8];
-
     int GetRasterXSize();
     int GetRasterYSize();
     int GetRasterCount();
