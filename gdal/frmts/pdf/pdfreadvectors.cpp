@@ -245,7 +245,7 @@ void PDFDataset::ExploreTree(GDALPDFObject* poObj,
     if (nRecLevel == 16)
         return;
 
-    std::pair<int,int> oObjPair( poObj->GetRefNum(), poObj->GetRefGen() );
+    std::pair<int,int> oObjPair( poObj->GetRefNum().toInt(), poObj->GetRefGen());
     if( aoSetAlreadyVisited.find( oObjPair ) != aoSetAlreadyVisited.end() )
         return;
     aoSetAlreadyVisited.insert( oObjPair );
@@ -1656,11 +1656,11 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject* poContents,
             {
                 const char* pszKey = oIter->first.c_str();
                 GDALPDFObject* poObj = oIter->second;
-                if( poObj->GetRefNum() != 0 )
+                if( poObj->GetRefNum().toInt() != 0 )
                 {
                     std::map< std::pair<int, int>, OGRPDFLayer *>::iterator
                         oIterNumGenToLayer = oMapNumGenToLayer.find(
-                            std::pair<int,int>(poObj->GetRefNum(), poObj->GetRefGen()) );
+                            std::pair<int,int>(poObj->GetRefNum().toInt(), poObj->GetRefGen()));
                     if( oIterNumGenToLayer != oMapNumGenToLayer.end() )
                     {
                         oMapPropertyToLayer[pszKey] = oIterNumGenToLayer->second;
