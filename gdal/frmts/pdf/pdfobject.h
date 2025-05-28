@@ -43,10 +43,10 @@
 #include <map>
 #include <vector>
 
-#define DEFAULT_DPI         (72.0)
-#define USER_UNIT_IN_INCH   (1.0 / DEFAULT_DPI)
+#define DEFAULT_DPI (72.0)
+#define USER_UNIT_IN_INCH (1.0 / DEFAULT_DPI)
 
-double ROUND_TO_INT_IF_CLOSE(double x, double eps = 0);
+double ROUND_IF_CLOSE(double x, double eps = 0);
 
 typedef enum
 {
@@ -69,6 +69,45 @@ class GDALPDFObjectRW;
 class GDALPDFDictionaryRW;
 class GDALPDFArrayRW;
 
+class GDALPDFObjectNum
+{
+    int m_nId;
+
+public:
+    explicit GDALPDFObjectNum(int nId = 0) : m_nId(nId)
+    {
+    }
+
+    GDALPDFObjectNum(const GDALPDFObjectNum& other) = default;
+    GDALPDFObjectNum& operator=(const GDALPDFObjectNum&) = default;
+
+    GDALPDFObjectNum& operator=(int nId)
+    {
+        m_nId = nId;
+        return *this;
+    }
+
+    int toInt() const
+    {
+        return m_nId;
+    }
+
+    bool toBool() const
+    {
+        return m_nId > 0;
+    }
+
+    bool operator==(const GDALPDFObjectNum& other) const
+    {
+        return m_nId == other.m_nId;
+    }
+
+    bool operator<(const GDALPDFObjectNum& other) const
+    {
+        return m_nId < other.m_nId;
+    }
+};
+
 class GDALPDFObject
 {
     protected:
@@ -83,17 +122,22 @@ class GDALPDFObject
         virtual int               GetInt() = 0;
         virtual double            GetReal() = 0;
         virtual int               CanRepresentRealAsString() { return FALSE; }
-        virtual const CPLString&  GetString() = 0;
-        virtual const CPLString&  GetName() = 0;
+        virtual const std::string&  GetString() = 0;
+        virtual const std::string&  GetName() = 0;
         virtual GDALPDFDictionary*  GetDictionary() = 0;
         virtual GDALPDFArray*       GetArray() = 0;
         virtual GDALPDFStream*      GetStream() = 0;
-        virtual int                 GetRefNum() = 0;
+        virtual GDALPDFObjectNum    GetRefNum() = 0;
         virtual int                 GetRefGen() = 0;
+
+        virtual int GetPrecision() const
+        {
+            return 16;
+        }
 
         GDALPDFObject*              LookupObject(const char* pszPath);
 
-        void                        Serialize(CPLString& osStr);
+        void                        Serialize(CPLString& osStr, bool bEmitRef = true);
         CPLString                   Serialize() { CPLString osStr; Serialize(osStr); return osStr; }
         GDALPDFObjectRW*            Clone();
 };
@@ -171,12 +215,12 @@ class GDALPDFObjectRW : public GDALPDFObject
         virtual int               GetInt() override;
         virtual double            GetReal() override;
         virtual int               CanRepresentRealAsString() override { return m_bCanRepresentRealAsString; }
-        virtual const CPLString&  GetString() override;
-        virtual const CPLString&  GetName() override;
+        virtual const std::string&  GetString() override;
+        virtual const std::string&  GetName() override;
         virtual GDALPDFDictionary*  GetDictionary() override;
         virtual GDALPDFArray*       GetArray() override;
         virtual GDALPDFStream*      GetStream() override;
-        virtual int                 GetRefNum() override;
+        virtual GDALPDFObjectNum    GetRefNum() override;
         virtual int                 GetRefGen() override;
 };
 
@@ -310,19 +354,23 @@ class GDALPDFObjectPodofo : public GDALPDFObject
 class GDALPDFObjectPdfium : public GDALPDFObject
 {
     private:
-        CPDF_Object* m_po;
+        /*CPDF_Object* m_po;*/
+        RetainPtr<const CPDF_Object> m_obj;
+
         GDALPDFDictionary* m_poDict;
         GDALPDFArray* m_poArray;
         GDALPDFStream* m_poStream;
         CPLString osStr;
 
-                GDALPDFObjectPdfium(CPDF_Object *po);
+        //        GDALPDFObjectPdfium(CPDF_Object *po);
+        GDALPDFObjectPdfium(RetainPtr<const CPDF_Object> obj);
 
     protected:
         virtual const char*       GetTypeNameNative() override;
 
     public:
-        static GDALPDFObjectPdfium* Build(CPDF_Object *po);
+        // static GDALPDFObjectPdfium* Build(CPDF_Object *po);
+        static GDALPDFObjectPdfium* Build(RetainPtr<const CPDF_Object> obj);
 
         virtual ~GDALPDFObjectPdfium();
 
@@ -330,12 +378,12 @@ class GDALPDFObjectPdfium : public GDALPDFObject
         virtual int               GetBool() override;
         virtual int               GetInt() override;
         virtual double            GetReal() override;
-        virtual const CPLString&  GetString() override;
-        virtual const CPLString&  GetName() override;
+        virtual const std::string&  GetString() override;
+        virtual const std::string&  GetName() override;
         virtual GDALPDFDictionary*  GetDictionary() override;
         virtual GDALPDFArray*       GetArray() override;
         virtual GDALPDFStream*      GetStream() override;
-        virtual int                 GetRefNum() override;
+        virtual GDALPDFObjectNum    GetRefNum() override;
         virtual int                 GetRefGen() override;
 };
 
