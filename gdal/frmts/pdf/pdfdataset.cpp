@@ -2354,7 +2354,7 @@ PDFDataset::~PDFDataset()
         delete apoOvrDSBackup[i];
     apoOvrDSBackup.clear();
 #endif
-
+    
     CPLFree(pabyCachedData);
     pabyCachedData = nullptr;
 
@@ -6213,7 +6213,8 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
                  "Invalid length for GPTS object");
         return FALSE;
     }
-
+     
+    double adfGPTS[8];
     for(i=0;i<8;i++)
     {
         adfGPTS[i] = Get(poGPTS, i);
@@ -6244,6 +6245,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
         return FALSE;
     }
 
+    double adfLPTS[8];
     for(i=0;i<8;i++)
     {
         adfLPTS[i] = Get(poLPTS, i);
@@ -6430,6 +6432,9 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
         asGCPS[i].dfGCPY     = y;
 
         poRing->addPoint(x, y);
+
+        //Expose asGCPS to runtimecore as rtcGCPS
+        rtcGCPS.push_back(asGCPS[i]);
     }
 
     delete poSRSGeog;
@@ -6745,6 +6750,11 @@ CPLErr      PDFDataset::SetMetadataItem( const char * pszName,
 
 int PDFDataset::GetGCPCount()
 {
+    if (nGCPCount == 0)
+    {
+        return rtcGCPS.size();
+    }
+
     return nGCPCount;
 }
 
@@ -6765,7 +6775,17 @@ const char * PDFDataset::GetGCPProjection()
 
 const GDAL_GCP * PDFDataset::GetGCPs()
 {
-    return pasGCPList;
+    if (pasGCPList != nullptr)
+    {
+        return pasGCPList;
+    }
+    
+    if (!rtcGCPS.empty())
+    {
+        return &rtcGCPS[0];
+    }
+
+    return nullptr;
 }
 
 /************************************************************************/
