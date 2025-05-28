@@ -114,11 +114,27 @@
 #endif
 
 #include <cstring>
-//#include <fpdfsdk/include/fsdk_define.h>
-#include <fpdfview.h>
-#include <core/include/fpdfapi/fpdf_page.h>
-#include <core/include/fpdfapi/fpdf_objects.h>
-#include "fpdfsdk/include/fsdk_rendercontext.h"
-#endif // HAVE_PDFIUM
+
+#define CPL_NON_FINAL 
+
+#include "core/fpdfapi/parser/cpdf_document.h"
+#include "core/fpdfapi/parser/cpdf_object.h"
+#include "core/fpdfapi/parser/cpdf_number.h"
+#include "core/fpdfapi/parser/cpdf_array.h"
+#include "core/fpdfapi/parser/cpdf_stream.h"
+#include "core/fpdfapi/parser/cpdf_stream_acc.h"
+
+#include "core/fpdfapi/page/cpdf_page.h"
+#include "core/fpdfapi/page/cpdf_occontext.h"
+
+#include "core/fxcrt/fx_string.h"
+#include "core/fxcrt/retain_ptr.h"
+
+#include "public/fpdfview.h"
+
+#include "fpdfsdk/cpdfsdk_helpers.h"
+//#include "fpdfsdk/include/fsdk_rendercontext.h"
+
+#endif // ~ HAVE_PDFIUM
 
 #endif

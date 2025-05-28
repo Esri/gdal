@@ -469,7 +469,7 @@ void GDALPDFDumper::Dump(GDALPDFObject* poObj, int nDepth)
         osIndent += " ";
     fprintf(f, "%sType = %s",
             osIndent.c_str(), poObj->GetTypeName());
-    int nRefNum = poObj->GetRefNum();
+    int nRefNum = poObj->GetRefNum().toInt();
     if (nRefNum != 0)
         fprintf(f, ", Num = %d, Gen = %d",
                 nRefNum, poObj->GetRefGen());
@@ -512,7 +512,7 @@ void GDALPDFDumper::Dump(GDALPDFObject* poObj, int nDepth)
     GDALPDFStream* poStream = poObj->GetStream();
     if (poStream != nullptr)
     {
-        fprintf(f, "%sHas stream (%d bytes)\n", osIndent.c_str(), poStream->GetLength());
+        fprintf(f, "%sHas stream (%lld bytes)\n", osIndent.c_str(), poStream->GetLength());
     }
 }
 
@@ -535,9 +535,9 @@ void GDALPDFDumper::Dump(GDALPDFDictionary* poDict, int nDepth)
         GDALPDFObject* poObj = oIter->second;
         if (strcmp(pszKey, "Parent") == 0 && !bDumpParent)
         {
-            if (poObj->GetRefNum())
+            if (poObj->GetRefNum().toBool())
                 fprintf(f, ", Num = %d, Gen = %d",
-                        poObj->GetRefNum(), poObj->GetRefGen());
+                        poObj->GetRefNum().toInt(), poObj->GetRefGen());
             fprintf(f, "\n");
             continue;
         }
@@ -1160,6 +1160,9 @@ int LoadPdfiumDocumentPage(
   }
 
   // Check page num in document
+  int nPages = 0; // see FPDF_EXPORT int FPDF_CALLCONV FPDF_GetPageCount(FPDF_DOCUMENT document);
+
+#ifdef HAVE_PDFIUM3
   int nPages = poDoc->doc->GetPageCount();
   if (pageNum < 1 || pageNum > nPages)
   {
@@ -1173,19 +1176,22 @@ int LoadPdfiumDocumentPage(
   /* Sanity check to validate page count */
   if( pageNum != nPages )
   {
-      if( poDoc->doc->GetPage(nPages - 1) == nullptr )
+      if (poDoc->doc->GetPageDictionary(nPages - 1) == nullptr)
       {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page count");
         CPLReleaseMutex(g_oPdfiumLoadDocMutex);
         return FALSE;
       }
   }
+#endif // ~ HAVE_PDFIUM3
 
   TMapPdfiumPages::iterator itPage;
   itPage = poDoc->pages.find(pageNum);
   TPdfiumPageStruct *poPage = nullptr;
   // Page not loaded
   if(itPage == poDoc->pages.end()) {
+#ifdef HAVE_PDFIUM3
+    // error C2039: 'GetPage': is not a member of 'CPDF_Document'
     CPDF_Dictionary* pDict = poDoc->doc->GetPage(pageNum - 1);
     if (pDict == nullptr) {
       CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDFium : invalid page");
@@ -1215,6 +1221,7 @@ int LoadPdfiumDocumentPage(
     poPage->sharedNum = 0;
 
     poDoc->pages[pageNum] = poPage;
+#endif // ~ HAVE_PDFIUM3
   }
   // Page already loaded
   else {
@@ -1266,8 +1273,11 @@ int UnloadPdfiumDocumentPage(TPdfiumDocumentStruct** doc, TPdfiumPageStruct** pa
   CPLCreateOrAcquireMutex(&(pPage->readMutex), PDFIUM_MUTEX_TIMEOUT);
   CPLReleaseMutex(pPage->readMutex);
   CPLDestroyMutex(pPage->readMutex);
+
+#ifdef HAVE_PDFIUM3
   // Close page and remove from map
   FPDF_ClosePage(pPage->page);
+#endif // ~ HAVE_PDFIUM3
 
   pDoc->pages.erase(pPage->pageNum);
   delete pPage;
@@ -1283,8 +1293,12 @@ int UnloadPdfiumDocumentPage(TPdfiumDocumentStruct** doc, TPdfiumPageStruct** pa
     return TRUE;
   }
 
+#ifdef HAVE_PDFIUM3
+  // error C2664: 'void FPDF_CloseDocument(FPDF_DOCUMENT)': cannot convert argument 1 from 'CPDF_Document *' to 'FPDF_DOCUMENT'
   // Close document and remove from map
   FPDF_CloseDocument(pDoc->doc);
+#endif // ~ HAVE_PDFIUM3
+
   g_mPdfiumDatasets.erase(pDoc->filename);
   CPLFree(pDoc->filename);
   VSIFCloseL((VSILFILE*)pDoc->psFileAccess->m_Param);
@@ -1366,34 +1380,40 @@ const char* PDFDataset::GetOption(char** papszOpenOptions,
 /*                         GDALPDFiumOCContext                          */
 /************************************************************************/
 
-class GDALPDFiumOCContext : public IPDF_OCContext
+class GDALPDFiumOCContext // : public IPDF_OCContext
 {
+#ifdef HAVE_PDFIUM3
     PDFDataset* m_poDS;
     CPDF_OCContext m_DefaultOCContext;
 public:
 
+    // error C2504: 'IPDF_OCContext': base class undefined
     GDALPDFiumOCContext(PDFDataset* poDS, CPDF_Document *pDoc) :
                                 m_poDS(poDS), m_DefaultOCContext(pDoc) {}
 
-    virtual FX_BOOL CheckOCGVisible(const CPDF_Dictionary *pOCGDict) override
+    // error C3646: 'CheckOCGVisible': unknown override specifier
+    /*virtual */bool CheckOCGVisible(const CPDF_Dictionary *pOCGDict) /*override*/
     {
         PDFDataset::VisibilityState eVisibility =
             m_poDS->GetVisibilityStateForOGCPdfium(
                                 pOCGDict->GetObjNum(), pOCGDict->GetGenNum() );
         if( eVisibility == PDFDataset::VISIBILITY_ON )
-            return TRUE;
+            return true;
         if( eVisibility == PDFDataset::VISIBILITY_OFF )
-            return FALSE;
+            return false;
         return m_DefaultOCContext.CheckOCGVisible(pOCGDict);
     }
+#endif // ~ HAVE_PDFIUM3
 };
 
 /************************************************************************/
 /*                      GDALPDFiumRenderDeviceDriver                    */
 /************************************************************************/
 
-class GDALPDFiumRenderDeviceDriver: public IFX_RenderDeviceDriver
+class GDALPDFiumRenderDeviceDriver // : public IFX_RenderDeviceDriver
 {
+#ifdef HAVE_PDFIUM3
+    // error C2504: 'IFX_RenderDeviceDriver': base class undefined
         IFX_RenderDeviceDriver* m_poParent;
         CFX_RenderDevice* m_pDevice;
 
@@ -1581,6 +1601,8 @@ public:
     }
 
     virtual void    ClearDriver() override { m_poParent->ClearDriver(); }
+
+#endif // ~ HAVE_PDFIUM3
 };
 
 /************************************************************************/
@@ -1623,7 +1645,10 @@ void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page,
                                         int size_x, int size_y,
                                         const char* pszRenderingOptions)
 {
-    CPDF_Page* pPage = (CPDF_Page*)page;
+#ifdef HAVE_PDFIUM3
+    // error C2065: 'CRenderContext': undeclared identifier
+
+    CPDF_Page* pPage = (CPDF_Page*)page; // is it legit doing so with FPDF_PAGE?
 
     CRenderContext* pContext = new CRenderContext;
     pPage->SetPrivateData((void*)1, pContext, DropContext);
@@ -1701,6 +1726,8 @@ void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page,
 
     delete pContext;
     pPage->RemovePrivateData((void*)1);
+
+#endif // ~ HAVE_PDFIUM3
 }
 
 #endif /* HAVE_PDFIUM */
@@ -1716,7 +1743,9 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
                                GByte* pabyData )
 {
     CPLErr eErr = CE_None;
+#ifdef HAVE_PDFIUM3
     const char* pszRenderingOptions = GetOption(papszOpenOptions, "RENDERING_OPTIONS", nullptr);
+#endif // ~ HAVE_PDFIUM3
 
 #ifdef HAVE_POPPLER
     if(bUseLib.test(PDFLIB_POPPLER))
@@ -1961,7 +1990,9 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
 
         // Parsing content required before rastering
         // can takes too long for PDF with large number of objects/layers
+#ifdef HAVE_PDFIUM3
         poPagePdfium->page->ParseContent();
+#endif // ~ HAVE_PDFIUM3
 
         FPDF_BITMAP bitmap = FPDFBitmap_Create(nReqXSize, nReqYSize, nBands == 4/*alpha*/);
         // As coded now, FPDFBitmap_Create cannot allocate more than 1 GB
@@ -2034,8 +2065,13 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
 
         // Part of PDF is render with -x, -y, page_width, page_height
         // (not requested size!)
+
+#ifdef HAVE_PDFIUM3
+        // error C2664: 'void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP,FPDF_PAGE,int,int,int,int,const char *)'
+        // : cannot convert argument 2 from 'CPDF_Page *' to 'FPDF_PAGE'
         PDFiumRenderPageBitmap(bitmap, poPagePdfium->page,
               -nReqXOff, -nReqYOff, nRasterXSize, nRasterYSize, pszRenderingOptions);
+#endif // ~ HAVE_PDFIUM3
 
         int stride = FPDFBitmap_GetStride(bitmap);
         const GByte* buffer = reinterpret_cast<const GByte*>(FPDFBitmap_GetBuffer(bitmap));
@@ -2331,9 +2367,12 @@ GDALPDFObject* PDFDataset::GetCatalog()
 #ifdef HAVE_PDFIUM
     if(bUseLib.test(PDFLIB_PDFIUM))
     {
+#ifdef HAVE_PDFIUM3
+        // error C2440: 'initializing': cannot convert from 'const CPDF_Dictionary *' to 'CPDF_Dictionary *'
         CPDF_Dictionary* catalog = poDocPdfium->doc->GetRoot();
         if(catalog)
             poCatalogObject = GDALPDFObjectPdfium::Build(catalog);
+#endif // ~ HAVE_PDFIUM3
     }
 #endif  // ~ HAVE_PDFIUM
 
@@ -2368,7 +2407,7 @@ PDFDataset::~PDFDataset()
     GDALPDFDictionaryRW* poCatalogDictCopy = nullptr;
     if( poPageObj )
     {
-        nNum = poPageObj->GetRefNum();
+        nNum = poPageObj->GetRefNum().toInt();
         nGen = poPageObj->GetRefGen();
         if (eAccess == GA_Update &&
             (bProjDirty || bNeatLineDirty || bInfoDirty || bXMPDirty) &&
@@ -2818,8 +2857,8 @@ int GDALPDFParseStreamContent(const char* pszContent,
                                 double dfHeight = Get(poHeight);
                                 double dfScaleX = adfVals[0];
                                 double dfScaleY = adfVals[3];
-                                double dfDPI_X = ROUND_TO_INT_IF_CLOSE(dfWidth / dfScaleX * DEFAULT_DPI, 1e-3);
-                                double dfDPI_Y = ROUND_TO_INT_IF_CLOSE(dfHeight / dfScaleY * DEFAULT_DPI, 1e-3);
+                                double dfDPI_X = ROUND_IF_CLOSE(dfWidth / dfScaleX * DEFAULT_DPI, 1e-3);
+                                double dfDPI_Y = ROUND_IF_CLOSE(dfHeight / dfScaleY * DEFAULT_DPI, 1e-3);
                                 //CPLDebug("PDF", "Image %s, width = %.16g, height = %.16g, scaleX = %.16g, scaleY = %.16g --> DPI_X = %.16g, DPI_Y = %.16g",
                                 //                osCurrentImage.c_str(), dfWidth, dfHeight, dfScaleX, dfScaleY, dfDPI_X, dfDPI_Y);
                                 if (dfDPI_X > dfDPI) dfDPI = dfDPI_X;
@@ -3019,7 +3058,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
             if (poPageStream != nullptr)
             {
                 char* pszContent = nullptr;
-                int nLength = poPageStream->GetLength();
+                int64_t nLength = poPageStream->GetLength();
                 int bResetTiles = FALSE;
                 double dfScaleDPI = 1.0;
 
@@ -3215,7 +3254,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
               (poUserUnit->GetType() == PDFObjectType_Int ||
                poUserUnit->GetType() == PDFObjectType_Real) )
         {
-            dfDPI = ROUND_TO_INT_IF_CLOSE(Get(poUserUnit) * DEFAULT_DPI, 1e-5);
+            dfDPI = ROUND_IF_CLOSE(Get(poUserUnit) * DEFAULT_DPI, 1e-5);
             CPLDebug("PDF", "Found UserUnit in Page --> DPI = %.16g", dfDPI);
             SetMetadataItem("DPI", CPLSPrintf("%.16g", dfDPI));
         }
@@ -3653,9 +3692,9 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray* poArray,
 
                 AddLayer(osCurLayer.c_str());
                 osLayerWithRefList.AddString(
-                    CPLSPrintf("%s %d %d", osCurLayer.c_str(), poObj->GetRefNum(), poObj->GetRefGen()));
+                    CPLSPrintf("%s %d %d", osCurLayer.c_str(), poObj->GetRefNum().toInt(), poObj->GetRefGen()));
                 oMapLayerNameToOCGNumGenPdfium[osCurLayer] =
-                    std::pair<int,int>(poObj->GetRefNum(), poObj->GetRefGen());
+                    std::pair<int,int>(poObj->GetRefNum().toInt(), poObj->GetRefGen());
             }
         }
     }
@@ -3723,7 +3762,7 @@ void PDFDataset::TurnLayersOnOffPdfium()
         for(i=0;i<nLength;i++)
         {
             GDALPDFObject* poOCG = poOCGsArray->Get(i);
-            oMapOCGNumGenToVisibilityStatePdfium[ std::pair<int,int>(poOCG->GetRefNum(), poOCG->GetRefGen()) ] =
+            oMapOCGNumGenToVisibilityStatePdfium[ std::pair<int,int>(poOCG->GetRefNum().toInt(), poOCG->GetRefGen())] =
                 (bAll) ? VISIBILITY_ON : VISIBILITY_OFF;
         }
 
@@ -3885,7 +3924,7 @@ CPLString PDFDataset::FindLayerOCG(GDALPDFDictionary* poPageDict,
         for(; oIter != oEnd; ++oIter)
         {
             GDALPDFObject* poObj = oIter->second;
-            if( poObj->GetRefNum() != 0 && poObj->GetType() == PDFObjectType_Dictionary )
+            if( poObj->GetRefNum().toInt() != 0 && poObj->GetType() == PDFObjectType_Dictionary )
             {
                 GDALPDFObject* poType = poObj->GetDictionary()->Get("Type");
                 GDALPDFObject* poName = poObj->GetDictionary()->Get("Name");
@@ -3923,7 +3962,7 @@ void PDFDataset::FindLayersGeneric(GDALPDFDictionary* poPageDict)
         for(; oIter != oEnd; ++oIter)
         {
             GDALPDFObject* poObj = oIter->second;
-            if( poObj->GetRefNum() != 0 && poObj->GetType() == PDFObjectType_Dictionary )
+            if( poObj->GetRefNum().toInt() != 0 && poObj->GetType() == PDFObjectType_Dictionary )
             {
                 GDALPDFObject* poType = poObj->GetDictionary()->Get("Type");
                 GDALPDFObject* poName = poObj->GetDictionary()->Get("Name");
@@ -3935,8 +3974,9 @@ void PDFDataset::FindLayersGeneric(GDALPDFDictionary* poPageDict)
                 {
                     osLayerWithRefList.AddString(
                         CPLSPrintf("%s %d %d",
-                                    PDFSanitizeLayerName(poName->GetString()).c_str(),
-                                    poObj->GetRefNum(),
+                                    PDFSanitizeLayerName(poName->GetString().c_str())
+                                        .c_str(),
+                                    poObj->GetRefNum().toInt(),
                                     poObj->GetRefGen()));
                 }
             }
@@ -4322,6 +4362,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
+#ifdef HAVE_PDFIUM3
+    // error C2039: 'm_pFormDict': is not a member of 'CPDF_Page'
     CPDF_Object* pageObj = poPagePdfium->page->m_pFormDict;
     if(pageObj == nullptr) {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page object");
@@ -4331,6 +4373,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     poPageObj = GDALPDFObjectPdfium::Build(pageObj);
     if( poPageObj == nullptr )
         return nullptr;
+#endif // ~ HAVE_PDFIUM3
+
   }
 #endif  // ~ HAVE_PDFIUM
 
@@ -4452,11 +4496,14 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 #ifdef HAVE_PDFIUM
     if (bUseLib.test(PDFLIB_PDFIUM)) {
+#ifdef HAVE_PDFIUM3
+        // error C2039: 'GetPageBBox': is not a member of 'CPDF_Page'
         CFX_FloatRect rect = poPagePdfium->page->GetPageBBox();
         dfX1 = rect.left;
         dfX2 = rect.right;
         dfY1 = rect.bottom;
         dfY2 = rect.top;
+#endif // ~ HAVE_PDFIUM3
     }
 #endif  // ~ HAVE_PDFIUM
 
@@ -4490,11 +4537,14 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef HAVE_PDFIUM
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
+#ifdef HAVE_PDFIUM3
+        // error C3861: 'FX_BSTRC': identifier not found
         CPDF_Object* pRotate = poPagePdfium->page->GetPageAttr(FX_BSTRC("Rotate"));
         if (pRotate)
           dfRotation = pRotate->GetInteger();
         if(dfRotation < 0)
           dfRotation += 360.0;
+#endif // ~ HAVE_PDFIUM3
     }
 #endif
 
@@ -4640,11 +4690,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                     {
                         if (nImageNum < 0)
                             CPLDebug("PDF", "Measure found on Image object (%d)",
-                                     poObj->GetRefNum());
+                                     poObj->GetRefNum().toInt());
 
                         GDALPDFObject* poColorSpace = poDict->Get("ColorSpace");
                         GDALPDFObject* poBitsPerComponent = poDict->Get("BitsPerComponent");
-                        if (poObj->GetRefNum() != 0 &&
+                        if (poObj->GetRefNum().toInt() != 0 &&
                             poObj->GetRefGen() == 0 &&
                             poColorSpace != nullptr &&
                             poColorSpace->GetType() == PDFObjectType_Name &&
@@ -4660,7 +4710,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                                 poDS->SetMetadataItem(CPLSPrintf("SUBDATASET_%d_NAME",
                                                                  nSubDataset),
                                                       CPLSPrintf("PDF_IMAGE:%d:%d:%s",
-                                                                 iPage, poObj->GetRefNum(), pszFilename),
+                                                                 iPage, poObj->GetRefNum().toInt(), pszFilename),
                                                       "SUBDATASETS");
                                 poDS->SetMetadataItem(CPLSPrintf("SUBDATASET_%d_DESC",
                                                                  nSubDataset),
@@ -4668,7 +4718,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                                                                  nW, nH, iPage, pszFilename),
                                                       "SUBDATASETS");
                             }
-                            else if (poObj->GetRefNum() == nImageNum)
+                            else if (poObj->GetRefNum().toInt() == nImageNum)
                             {
                                 poDS->nRasterXSize = nW;
                                 poDS->nRasterYSize = nH;
@@ -4698,10 +4748,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     /* If pixel size or top left coordinates are very close to an int, round them to the int */
     double dfEps = ( fabs(poDS->adfGeoTransform[0]) > 1e5 &&
                      fabs(poDS->adfGeoTransform[3]) > 1e5 ) ? 1e-5 : 1e-8;
-    poDS->adfGeoTransform[0] = ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[0], dfEps);
-    poDS->adfGeoTransform[1] = ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[1]);
-    poDS->adfGeoTransform[3] = ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[3], dfEps);
-    poDS->adfGeoTransform[5] = ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[5]);
+    poDS->adfGeoTransform[0] = ROUND_IF_CLOSE(poDS->adfGeoTransform[0], dfEps);
+    poDS->adfGeoTransform[1] = ROUND_IF_CLOSE(poDS->adfGeoTransform[1]);
+    poDS->adfGeoTransform[3] = ROUND_IF_CLOSE(poDS->adfGeoTransform[3], dfEps);
+    poDS->adfGeoTransform[5] = ROUND_IF_CLOSE(poDS->adfGeoTransform[5]);
 
     if( bUseLib.test(PDFLIB_PDFIUM) )
     {
@@ -4831,6 +4881,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef HAVE_PDFIUM
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
+#ifdef HAVE_PDFIUM3
+        // error C2664: 'GDALPDFObjectPdfium *GDALPDFObjectPdfium::Build(CPDF_Object *)': cannot convert argument 1 from 'const CPDF_Dictionary *' to 'CPDF_Object *'
         GDALPDFObjectPdfium* poRoot = GDALPDFObjectPdfium::Build(poDocPdfium->doc->GetRoot());
         if(poRoot->GetType() == PDFObjectType_Dictionary) {
           GDALPDFDictionary* poDict = poRoot->GetDictionary();
@@ -4867,6 +4919,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->ParseInfo(poInfo);
             delete poInfo;
         }
+#endif // ~ HAVE_PDFIUM3
     }
 #endif  // ~ HAVE_PDFIUM
 
@@ -6026,7 +6079,7 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
         }
 
         CPLDebug("PDF", "Subtype = %s", poSubtype->GetName().c_str());
-        if( !EQUAL(poSubtype->GetName(), "GEO") )
+        if( !EQUAL(poSubtype->GetName().c_str(), "GEO"))
         {
             continue;
         }
@@ -6148,7 +6201,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
     }
 
     CPLDebug("PDF", "Subtype = %s", poSubtype->GetName().c_str());
-    if( !EQUAL(poSubtype->GetName(), "GEO") )
+    if( !EQUAL(poSubtype->GetName().c_str(), "GEO"))
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -6214,6 +6267,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
         return FALSE;
     }
 
+    double adfGPTS[8];
     for(i=0;i<8;i++)
     {
         adfGPTS[i] = Get(poGPTS, i);
@@ -6244,6 +6298,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
         return FALSE;
     }
 
+    double adfLPTS[8];
     for(i=0;i<8;i++)
     {
         adfLPTS[i] = Get(poLPTS, i);
@@ -6370,7 +6425,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
     /* ISO 32000 supplement spec, but in (northing, easting). Adobe reader is able to understand that, */
     /* so let's also try to do it with a heuristics. */
 
-    int bReproject = FALSE;
+    int bReproject = TRUE;
     if (oSRS.IsProjected() &&
         (fabs(adfGPTS[0]) > 91 || fabs(adfGPTS[2]) > 91 || fabs(adfGPTS[4]) > 91 || fabs(adfGPTS[6]) > 91 ||
          fabs(adfGPTS[1]) > 361 || fabs(adfGPTS[3]) > 361 || fabs(adfGPTS[5]) > 361 || fabs(adfGPTS[7]) > 361))
@@ -6423,8 +6478,8 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
             }
         }
 
-        x = ROUND_TO_INT_IF_CLOSE(x);
-        y = ROUND_TO_INT_IF_CLOSE(y);
+        x = ROUND_IF_CLOSE(x);
+        y = ROUND_IF_CLOSE(y);
 
         asGCPS[i].dfGCPX     = x;
         asGCPS[i].dfGCPY     = y;
@@ -6854,12 +6909,20 @@ static void GDALPDFUnloadDriver(CPL_UNUSED GDALDriver * poDriver)
             CPLCreateOrAcquireMutex(&(pPage->readMutex), PDFIUM_MUTEX_TIMEOUT);
             CPLReleaseMutex(pPage->readMutex);
             CPLDestroyMutex(pPage->readMutex);
+#ifdef HAVE_PDFIUM3
+            // error C2664: 'void FPDF_ClosePage(FPDF_PAGE)': cannot convert argument 1 from 'CPDF_Page *' to 'FPDF_PAGE'
+            // try: FPDF_PAGE p0 = FPDFPageFromIPDFPage(pPage->page);
             FPDF_ClosePage(pPage->page);
+#endif // ~ HAVE_PDFIUM3
             delete pPage;
             CPLReleaseMutex(g_oPdfiumReadMutex);
           } // ~ foreach page
 
+#ifdef HAVE_PDFIUM3
+          // error C2664: 'void FPDF_CloseDocument(FPDF_DOCUMENT)': cannot convert argument 1 from 'CPDF_Document *' to 'FPDF_DOCUMENT'
+          // see: FPDFPageFromIPDFPage
           FPDF_CloseDocument(pDoc->doc);
+#endif // ~ HAVE_PDFIUM3
           CPLFree(pDoc->filename);
           VSIFCloseL((VSILFILE*)pDoc->psFileAccess->m_Param);
           delete pDoc->psFileAccess;
