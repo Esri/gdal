@@ -1160,7 +1160,7 @@ int LoadPdfiumDocumentPage(
   }
 
   // Check page num in document
-  int nPages = 0; // see FPDF_EXPORT int FPDF_CALLCONV FPDF_GetPageCount(FPDF_DOCUMENT document);
+  // int nPages = 0; // see FPDF_EXPORT int FPDF_CALLCONV FPDF_GetPageCount(FPDF_DOCUMENT document);
 
 #ifdef HAVE_PDFIUM3
   int nPages = poDoc->doc->GetPageCount();
@@ -1190,38 +1190,39 @@ int LoadPdfiumDocumentPage(
   TPdfiumPageStruct *poPage = nullptr;
   // Page not loaded
   if(itPage == poDoc->pages.end()) {
-#ifdef HAVE_PDFIUM3
-    // error C2039: 'GetPage': is not a member of 'CPDF_Document'
-    CPDF_Dictionary* pDict = poDoc->doc->GetPage(pageNum - 1);
-    if (pDict == nullptr) {
-      CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDFium : invalid page");
+      auto pDict = poDoc->doc->GetPageDictionary(pageNum - 1);
+      if (pDict == nullptr)
+      {
+          CPLError(CE_Failure, CPLE_AppDefined,
+              "Invalid PDFium : invalid page");
 
-      CPLReleaseMutex(g_oPdfiumLoadDocMutex);
-      return FALSE;
-    }
-    CPDF_Page* pPage = new CPDF_Page;
-    if(!pPage) {
-      CPLError(CE_Failure, CPLE_AppDefined, "Not enough memory for Pdfium Page object");
+          CPLReleaseMutex(g_oPdfiumLoadDocMutex);
+          return FALSE;
+      }
+      auto pPage = pdfium::MakeRetain<CPDF_Page>(
+          poDoc->doc,
+          // coverity is confused by WrapRetain(), believing that multiple
+          // smart pointers manage the same raw pointer. Which is actually
+          // true, but a RetainPtr holds a reference counted object. It is
+          // thus safe to have several RetainPtr holding it.
+          // coverity[multiple_init_smart_ptr]
+          pdfium::WrapRetain(const_cast<CPDF_Dictionary*>(pDict.Get())));
 
-      CPLReleaseMutex(g_oPdfiumLoadDocMutex);
-      return FALSE;
-    }
-    pPage->Load(poDoc->doc, pDict);
+      poPage = new TPdfiumPageStruct;
+      if (!poPage)
+      {
+          CPLError(CE_Failure, CPLE_AppDefined,
+              "Not enough memory for Pdfium Page object");
 
-    poPage = new TPdfiumPageStruct;
-    if(!poPage) {
-      CPLError(CE_Failure, CPLE_AppDefined, "Not enough memory for Pdfium Page object");
+          CPLReleaseMutex(g_oPdfiumLoadDocMutex);
+          return FALSE;
+      }
+      poPage->pageNum = pageNum;
+      poPage->page = pPage.Leak();
+      poPage->readMutex = nullptr;
+      poPage->sharedNum = 0;
 
-      CPLReleaseMutex(g_oPdfiumLoadDocMutex);
-      return FALSE;
-    }
-    poPage->pageNum = pageNum;
-    poPage->page = pPage;
-    poPage->readMutex = nullptr;
-    poPage->sharedNum = 0;
-
-    poDoc->pages[pageNum] = poPage;
-#endif // ~ HAVE_PDFIUM3
+      poDoc->pages[pageNum] = poPage;
   }
   // Page already loaded
   else {
@@ -1274,10 +1275,8 @@ int UnloadPdfiumDocumentPage(TPdfiumDocumentStruct** doc, TPdfiumPageStruct** pa
   CPLReleaseMutex(pPage->readMutex);
   CPLDestroyMutex(pPage->readMutex);
 
-#ifdef HAVE_PDFIUM3
   // Close page and remove from map
-  FPDF_ClosePage(pPage->page);
-#endif // ~ HAVE_PDFIUM3
+  FPDF_ClosePage(FPDFPageFromIPDFPage(pPage->page));
 
   pDoc->pages.erase(pPage->pageNum);
   delete pPage;
@@ -1293,11 +1292,8 @@ int UnloadPdfiumDocumentPage(TPdfiumDocumentStruct** doc, TPdfiumPageStruct** pa
     return TRUE;
   }
 
-#ifdef HAVE_PDFIUM3
-  // error C2664: 'void FPDF_CloseDocument(FPDF_DOCUMENT)': cannot convert argument 1 from 'CPDF_Document *' to 'FPDF_DOCUMENT'
   // Close document and remove from map
-  FPDF_CloseDocument(pDoc->doc);
-#endif // ~ HAVE_PDFIUM3
+  FPDF_CloseDocument(FPDFDocumentFromCPDFDocument(pDoc->doc));
 
   g_mPdfiumDatasets.erase(pDoc->filename);
   CPLFree(pDoc->filename);
@@ -1382,7 +1378,7 @@ const char* PDFDataset::GetOption(char** papszOpenOptions,
 
 class GDALPDFiumOCContext // : public IPDF_OCContext
 {
-#ifdef HAVE_PDFIUM3
+#ifdef HAVE_PDFIUM3_OCContext
     PDFDataset* m_poDS;
     CPDF_OCContext m_DefaultOCContext;
 public:
@@ -1412,7 +1408,7 @@ public:
 
 class GDALPDFiumRenderDeviceDriver // : public IFX_RenderDeviceDriver
 {
-#ifdef HAVE_PDFIUM3
+#ifdef HAVE_PDFIUM3_RenderDeviceDriver
     // error C2504: 'IFX_RenderDeviceDriver': base class undefined
         IFX_RenderDeviceDriver* m_poParent;
         CFX_RenderDevice* m_pDevice;
@@ -1645,7 +1641,7 @@ void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page,
                                         int size_x, int size_y,
                                         const char* pszRenderingOptions)
 {
-#ifdef HAVE_PDFIUM3
+#ifdef HAVE_PDFIUM3_CRenderContext
     // error C2065: 'CRenderContext': undeclared identifier
 
     CPDF_Page* pPage = (CPDF_Page*)page; // is it legit doing so with FPDF_PAGE?
@@ -2066,12 +2062,8 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
         // Part of PDF is render with -x, -y, page_width, page_height
         // (not requested size!)
 
-#ifdef HAVE_PDFIUM3
-        // error C2664: 'void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP,FPDF_PAGE,int,int,int,int,const char *)'
-        // : cannot convert argument 2 from 'CPDF_Page *' to 'FPDF_PAGE'
-        PDFiumRenderPageBitmap(bitmap, poPagePdfium->page,
+        PDFiumRenderPageBitmap(bitmap, FPDFPageFromIPDFPage(poPagePdfium->page),
               -nReqXOff, -nReqYOff, nRasterXSize, nRasterYSize, pszRenderingOptions);
-#endif // ~ HAVE_PDFIUM3
 
         int stride = FPDFBitmap_GetStride(bitmap);
         const GByte* buffer = reinterpret_cast<const GByte*>(FPDFBitmap_GetBuffer(bitmap));
@@ -2367,12 +2359,18 @@ GDALPDFObject* PDFDataset::GetCatalog()
 #ifdef HAVE_PDFIUM
     if(bUseLib.test(PDFLIB_PDFIUM))
     {
-#ifdef HAVE_PDFIUM3
-        // error C2440: 'initializing': cannot convert from 'const CPDF_Dictionary *' to 'CPDF_Dictionary *'
-        CPDF_Dictionary* catalog = poDocPdfium->doc->GetRoot();
-        if(catalog)
-            poCatalogObject = GDALPDFObjectPdfium::Build(catalog);
-#endif // ~ HAVE_PDFIUM3
+        const CPDF_Dictionary* catalog = poDocPdfium->doc->GetRoot();
+
+        if (catalog)
+        {
+            poCatalogObject =
+            // coverity is confused by WrapRetain(), believing that multiple
+            // smart pointers manage the same raw pointer. Which is actually
+            // true, but a RetainPtr holds a reference counted object. It is
+            // thus safe to have several RetainPtr holding it.
+            // coverity[multiple_init_smart_ptr]
+            GDALPDFObjectPdfium::Build(pdfium::WrapRetain(catalog));
+        }
     }
 #endif  // ~ HAVE_PDFIUM
 
@@ -4362,10 +4360,9 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-#ifdef HAVE_PDFIUM3
-    // error C2039: 'm_pFormDict': is not a member of 'CPDF_Page'
-    CPDF_Object* pageObj = poPagePdfium->page->m_pFormDict;
-    if(pageObj == nullptr) {
+    const auto pageObj = poPagePdfium->page->GetDict();
+    if (pageObj == nullptr)
+    {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page object");
         UnloadPdfiumDocumentPage(&poDocPdfium, &poPagePdfium);
         return nullptr;
@@ -4373,8 +4370,6 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     poPageObj = GDALPDFObjectPdfium::Build(pageObj);
     if( poPageObj == nullptr )
         return nullptr;
-#endif // ~ HAVE_PDFIUM3
-
   }
 #endif  // ~ HAVE_PDFIUM
 
@@ -4496,14 +4491,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 #ifdef HAVE_PDFIUM
     if (bUseLib.test(PDFLIB_PDFIUM)) {
-#ifdef HAVE_PDFIUM3
-        // error C2039: 'GetPageBBox': is not a member of 'CPDF_Page'
-        CFX_FloatRect rect = poPagePdfium->page->GetPageBBox();
+        CFX_FloatRect rect = poPagePdfium->page->GetBBox();
         dfX1 = rect.left;
         dfX2 = rect.right;
         dfY1 = rect.bottom;
         dfY2 = rect.top;
-#endif // ~ HAVE_PDFIUM3
     }
 #endif  // ~ HAVE_PDFIUM
 
@@ -4537,14 +4529,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef HAVE_PDFIUM
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
-#ifdef HAVE_PDFIUM3
-        // error C3861: 'FX_BSTRC': identifier not found
-        CPDF_Object* pRotate = poPagePdfium->page->GetPageAttr(FX_BSTRC("Rotate"));
-        if (pRotate)
-          dfRotation = pRotate->GetInteger();
-        if(dfRotation < 0)
-          dfRotation += 360.0;
-#endif // ~ HAVE_PDFIUM3
+        CPLAssert(poPagePdfium);
+        dfRotation = poPagePdfium->page->GetPageRotation() * 90;
     }
 #endif
 
@@ -4881,28 +4867,35 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef HAVE_PDFIUM
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
-#ifdef HAVE_PDFIUM3
-        // error C2664: 'GDALPDFObjectPdfium *GDALPDFObjectPdfium::Build(CPDF_Object *)': cannot convert argument 1 from 'const CPDF_Dictionary *' to 'CPDF_Object *'
-        GDALPDFObjectPdfium* poRoot = GDALPDFObjectPdfium::Build(poDocPdfium->doc->GetRoot());
-        if(poRoot->GetType() == PDFObjectType_Dictionary) {
-          GDALPDFDictionary* poDict = poRoot->GetDictionary();
-          GDALPDFObject* poMetadata(poDict->Get("Metadata"));
-          if(poMetadata != nullptr) {
-            GDALPDFStream* poStream = poMetadata->GetStream();
-            if (poStream != nullptr) {
-              char* pszContent = poStream->GetBytes();
-              int nLength = (int)poStream->GetLength();
-              if (pszContent != nullptr && nLength > 15 &&
-                  STARTS_WITH(pszContent, "<?xpacket begin="))
-              {
-                  char *apszMDList[2];
-                  apszMDList[0] = pszContent;
-                  apszMDList[1] = nullptr;
-                  poDS->SetMetadata(apszMDList, "xml:XMP");
-              }
-              CPLFree(pszContent);
+        // coverity is confused by WrapRetain(), believing that multiple
+        // smart pointers manage the same raw pointer. Which is actually
+        // true, but a RetainPtr holds a reference counted object. It is
+        // thus safe to have several RetainPtr holding it.
+        // coverity[multiple_init_smart_ptr]
+        GDALPDFObjectPdfium* poRoot = GDALPDFObjectPdfium::Build(
+            pdfium::WrapRetain(poDocPdfium->doc->GetRoot()));
+        if (poRoot->GetType() == PDFObjectType_Dictionary)
+        {
+            GDALPDFDictionary* poDict = poRoot->GetDictionary();
+            GDALPDFObject* poMetadata(poDict->Get("Metadata"));
+            if (poMetadata != nullptr)
+            {
+                GDALPDFStream* poStream = poMetadata->GetStream();
+                if (poStream != nullptr)
+                {
+                    char* pszContent = poStream->GetBytes();
+                    const auto nLength = poStream->GetLength();
+                    if (pszContent != nullptr && nLength > 15 &&
+                        STARTS_WITH(pszContent, "<?xpacket begin="))
+                    {
+                        char* apszMDList[2];
+                        apszMDList[0] = pszContent;
+                        apszMDList[1] = nullptr;
+                        poDS->SetMetadata(apszMDList, "xml:XMP");
+                    }
+                    CPLFree(pszContent);
+                }
             }
-          }
         }
         delete poRoot;
 
@@ -4919,7 +4912,6 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->ParseInfo(poInfo);
             delete poInfo;
         }
-#endif // ~ HAVE_PDFIUM3
     }
 #endif  // ~ HAVE_PDFIUM
 
@@ -6909,20 +6901,12 @@ static void GDALPDFUnloadDriver(CPL_UNUSED GDALDriver * poDriver)
             CPLCreateOrAcquireMutex(&(pPage->readMutex), PDFIUM_MUTEX_TIMEOUT);
             CPLReleaseMutex(pPage->readMutex);
             CPLDestroyMutex(pPage->readMutex);
-#ifdef HAVE_PDFIUM3
-            // error C2664: 'void FPDF_ClosePage(FPDF_PAGE)': cannot convert argument 1 from 'CPDF_Page *' to 'FPDF_PAGE'
-            // try: FPDF_PAGE p0 = FPDFPageFromIPDFPage(pPage->page);
-            FPDF_ClosePage(pPage->page);
-#endif // ~ HAVE_PDFIUM3
+            FPDF_ClosePage(FPDFPageFromIPDFPage(pPage->page));
             delete pPage;
             CPLReleaseMutex(g_oPdfiumReadMutex);
           } // ~ foreach page
 
-#ifdef HAVE_PDFIUM3
-          // error C2664: 'void FPDF_CloseDocument(FPDF_DOCUMENT)': cannot convert argument 1 from 'CPDF_Document *' to 'FPDF_DOCUMENT'
-          // see: FPDFPageFromIPDFPage
-          FPDF_CloseDocument(pDoc->doc);
-#endif // ~ HAVE_PDFIUM3
+          FPDF_CloseDocument(FPDFDocumentFromCPDFDocument(pDoc->doc));
           CPLFree(pDoc->filename);
           VSIFCloseL((VSILFILE*)pDoc->psFileAccess->m_Param);
           delete pDoc->psFileAccess;

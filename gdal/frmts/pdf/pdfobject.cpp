@@ -2341,16 +2341,13 @@ GDALPDFDictionaryPdfium::~GDALPDFDictionaryPdfium()
 
 GDALPDFObject* GDALPDFDictionaryPdfium::Get(const char* pszKey)
 {
-#ifdef HAVE_PDFIUM3
     std::map<CPLString, GDALPDFObject*>::iterator oIter = m_map.find(pszKey);
     if (oIter != m_map.end())
         return oIter->second;
 
-    ByteString pdfiumKey(pszKey);
-
-    RetainPtr<CPDF_Object> p0 = m_poDict->GetMutableObjectFor(pdfiumKey.c_str());
-    CPDF_Object* poVal = p0.Get();
-    GDALPDFObjectPdfium* poObj = GDALPDFObjectPdfium::Build(poVal);
+    ByteStringView pdfiumKey(pszKey);
+    GDALPDFObjectPdfium* poObj =
+        GDALPDFObjectPdfium::Build(m_poDict->GetObjectFor(pdfiumKey));
     if (poObj)
     {
         m_map[pszKey] = poObj;
@@ -2360,9 +2357,6 @@ GDALPDFObject* GDALPDFDictionaryPdfium::Get(const char* pszKey)
     {
         return nullptr;
     }
-#else
-    return nullptr;
-#endif // ~ HAVE_PDFIUM3
 }
 
 /************************************************************************/
@@ -2371,34 +2365,23 @@ GDALPDFObject* GDALPDFDictionaryPdfium::Get(const char* pszKey)
 
 std::map<CPLString, GDALPDFObject*>& GDALPDFDictionaryPdfium::GetValues()
 {
-#ifdef HAVE_PDFIUM3
-    // unresolved external symbol "public: class std::vector<class fxcrt::ByteString,class std::allocator<class fxcrt::ByteString> > __cdecl CPDF_Dictionary::GetKeys(void)const
-    std::vector<ByteString> keys = m_poDict->GetKeys()
-
-    // FX_POSITION pos = m_poDict->GetStartPos();
-    // while(pos)
-    for (auto key = keys.begin(); key != keys.end(); ++key)
+    CPDF_DictionaryLocker dictIterator(m_poDict);
+    for (const auto& iter : dictIterator)
     {
-        ByteString key0 = *key;
-        // CPDF_Object* poVal = m_poDict->GetNextElement(pos, key);
-
-        RetainPtr<CPDF_Object> p0 = m_poDict->GetMutableObjectFor(key0.c_str());
-        CPDF_Object* poVal = p0.Get();
-
         // No object for this key
-        if(!poVal)
-          continue;
+        if (!iter.second)
+            continue;
 
-        const char* pszKey = key0.c_str();
+        const char* pszKey = iter.first.c_str();
         // Objects exists in the map
-        if(m_map.find(pszKey) != m_map.end())
-          continue;
-        GDALPDFObjectPdfium* poObj = GDALPDFObjectPdfium::Build(poVal);
-        if( poObj == nullptr )
+        if (m_map.find(pszKey) != m_map.end())
+            continue;
+        GDALPDFObjectPdfium* poObj = GDALPDFObjectPdfium::Build(iter.second);
+        if (poObj == nullptr)
             continue;
         m_map[pszKey] = poObj;
     }
-#endif // ~ HAVE_PDFIUM3
+
     return m_map;
 }
 
@@ -2467,7 +2450,7 @@ void GDALPDFStreamPdfium::Decompress()
         else
         {
 #ifdef HAVE_PDFIUM3
-            memcpy(&m_pData.get()[0], acc->DetachData().data(), nSize);
+            // memcpy(&m_pData.get()[0], acc->DetachData().data(), nSize);
 #endif // ~ HAVE_PDFIUM3
         }
     }
