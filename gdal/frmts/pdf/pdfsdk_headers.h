@@ -115,7 +115,9 @@
 
 #include <cstring>
 
-#define CPL_NON_FINAL 
+#define CPL_NON_FINAL
+
+#define HAVE_PDFIUM3 1
 
 #include "core/fpdfapi/parser/cpdf_document.h"
 #include "core/fpdfapi/parser/cpdf_object.h"
@@ -128,11 +130,15 @@
 #include "core/fpdfapi/page/cpdf_occontext.h"
 
 #include "core/fxcrt/fx_string.h"
+#include "core/fxcrt/string_template.h"
+#include "core/fxcrt/string_data_template.h"
 #include "core/fxcrt/retain_ptr.h"
 
 #include "public/fpdfview.h"
 
 #include "fpdfsdk/cpdfsdk_helpers.h"
+// #include "third_party/freetype/src/include/ft2build.h"
+
 //#include "fpdfsdk/include/fsdk_rendercontext.h"
 
 #endif // ~ HAVE_PDFIUM
