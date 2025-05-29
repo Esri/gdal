@@ -967,6 +967,11 @@ CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
     return CE_Failure;
 }
 
+bool GDALDataset::GetIsGeoTransformTargetingGCS() const
+{
+    return false;
+}
+
 /************************************************************************/
 /*                        GDALGetGeoTransform()                         */
 /************************************************************************/

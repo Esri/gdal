@@ -197,13 +197,15 @@ class PDFDataset final: public GDALPamDataset
     int          bGeoTransformValid;
     int          nGCPCount;
     GDAL_GCP    *pasGCPList;
-    std::vector<GDAL_GCP> rtcGCPS; // used for exposing GCPs to RuntimeCore
     int          bProjDirty;
     int          bNeatLineDirty;
 
     GDALMultiDomainMetadata oMDMD;
     int          bInfoDirty;
     int          bXMPDirty;
+
+    bool        isGeoTransformTargetingGCS = false;
+
 
     std::bitset<PDFLIB_COUNT> bUseLib;
 #ifdef HAVE_POPPLER
@@ -359,6 +361,7 @@ private:
 
     virtual const char* GetProjectionRef() override;
     virtual CPLErr GetGeoTransform( double * ) override;
+    virtual bool        GetIsGeoTransformTargetingGCS() const override;
 
     virtual CPLErr      SetProjection(const char* pszWKTIn) override;
     virtual CPLErr      SetGeoTransform(double* padfGeoTransform) override;

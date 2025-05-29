@@ -511,6 +511,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual CPLErr SetProjection( const char * pszProjection );
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
+    virtual bool GetIsGeoTransformTargetingGCS() const;
     virtual CPLErr SetGeoTransform( double * padfTransform );
 
     virtual CPLErr        AddBand( GDALDataType eType,
