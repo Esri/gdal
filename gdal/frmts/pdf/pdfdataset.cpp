@@ -6372,13 +6372,17 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
     /* ISO 32000 supplement spec, but in (northing, easting). Adobe reader is able to understand that, */
     /* so let's also try to do it with a heuristics. */
 
-    int bReproject = TRUE;
+    int bReproject = FALSE;
     if (oSRS.IsProjected() &&
         (fabs(adfGPTS[0]) > 91 || fabs(adfGPTS[2]) > 91 || fabs(adfGPTS[4]) > 91 || fabs(adfGPTS[6]) > 91 ||
          fabs(adfGPTS[1]) > 361 || fabs(adfGPTS[3]) > 361 || fabs(adfGPTS[5]) > 361 || fabs(adfGPTS[7]) > 361))
     {
         CPLDebug("PDF", "GPTS coordinates seems to be in (northing, easting), which is non-standard");
-        bReproject = FALSE;
+    }
+    else
+    {
+        // this is the standard (lat, long) format, so the transform will be targeting a GCS
+        isGeoTransformTargetingGCS = true;
     }
 
     OGRCoordinateTransformation* poCT = nullptr;
@@ -6503,6 +6507,11 @@ CPLErr PDFDataset::GetGeoTransform( double * padfTransform )
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
     return( (bGeoTransformValid) ? CE_None : CE_Failure );
+}
+
+bool PDFDataset::GetIsGeoTransformTargetingGCS() const
+{
+    return isGeoTransformTargetingGCS;
 }
 
 /************************************************************************/
