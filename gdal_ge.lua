@@ -168,6 +168,8 @@ defines {
 }
 
 includedirs {
+  _3RDPARTY_DIR,
+  _3RDPARTY_DIR .. "/abseil-cpp",
   _3RDPARTY_DIR .. "/gdal/gdal/alg",
   _3RDPARTY_DIR .. "/gdal/gdal/apps",
   _3RDPARTY_DIR .. "/gdal/gdal/gcore",
