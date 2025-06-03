@@ -114,10 +114,7 @@
 #endif
 
 #include <cstring>
-
-#define CPL_NON_FINAL
-
-#define HAVE_PDFIUM3 1
+#include "core/fpdfdoc/cpdf_annotlist.h"
 
 #include "core/fpdfapi/parser/cpdf_document.h"
 #include "core/fpdfapi/parser/cpdf_object.h"
@@ -129,18 +126,23 @@
 #include "core/fpdfapi/page/cpdf_page.h"
 #include "core/fpdfapi/page/cpdf_occontext.h"
 
+#include "core/fpdfapi/render/cpdf_rendercontext.h"
+#include "core/fpdfapi/render/cpdf_renderoptions.h"
+#include "core/fpdfapi/render/cpdf_pagerendercontext.h"
+#include "core/fpdfapi/render/cpdf_progressiverenderer.h"
+
 #include "core/fxcrt/fx_string.h"
-#include "core/fxcrt/string_template.h"
-#include "core/fxcrt/string_data_template.h"
 #include "core/fxcrt/retain_ptr.h"
 
-#include "public/fpdfview.h"
+#include "core/fxge/cfx_renderdevice.h"
+#include "core/fxge/renderdevicedriver_iface.h"
+#include "core/fxge/agg/cfx_agg_devicedriver.h"
+#include "core/fxge/dib/cfx_dibitmap.h"
+#include "core/fxge/agg/cfx_agg_imagerenderer.h"
 
 #include "fpdfsdk/cpdfsdk_helpers.h"
-// #include "third_party/freetype/src/include/ft2build.h"
+#include "fpdfsdk/cpdfsdk_pauseadapter.h"
 
-//#include "fpdfsdk/include/fsdk_rendercontext.h"
-
-#endif // ~ HAVE_PDFIUM
+#endif // HAVE_PDFIUM
 
 #endif
