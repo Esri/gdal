@@ -1687,10 +1687,10 @@ static void myRenderPageImpl(PDFDataset* poDS, CPDF_PageRenderContext* pContext,
     const FPDF_COLORSCHEME* color_scheme,
     bool bNeedToRestore, CPDFSDK_PauseAdapter* pause)
 {
-    if (!pContext->options_)
-        pContext->options_ = std::make_unique<CPDF_RenderOptions>();
+    if (!pContext->m_pOptions)
+        pContext->m_pOptions = std::make_unique<CPDF_RenderOptions>();
 
-    auto& options = pContext->options_->GetOptions();
+    auto& options = pContext->m_pOptions->GetOptions();
     options.bClearType = !!(flags & FPDF_LCD_TEXT);
     options.bNoNativeText = !!(flags & FPDF_NO_NATIVETEXT);
     options.bLimitedImageCache = !!(flags & FPDF_RENDER_LIMITEDIMAGECACHE);
@@ -1701,50 +1701,50 @@ static void myRenderPageImpl(PDFDataset* poDS, CPDF_PageRenderContext* pContext,
 
     // Grayscale output
     if (flags & FPDF_GRAYSCALE)
-        pContext->options_->SetColorMode(CPDF_RenderOptions::kGray);
+        pContext->m_pOptions->SetColorMode(CPDF_RenderOptions::kGray);
 
     if (color_scheme)
     {
-        pContext->options_->SetColorMode(CPDF_RenderOptions::kForcedColor);
-        SetColorFromScheme(color_scheme, pContext->options_.get());
+        pContext->m_pOptions->SetColorMode(CPDF_RenderOptions::kForcedColor);
+        SetColorFromScheme(color_scheme, pContext->m_pOptions.get());
         options.bConvertFillToStroke = !!(flags & FPDF_CONVERT_FILL_TO_STROKE);
     }
 
     const CPDF_OCContext::UsageType usage = (flags & FPDF_PRINTING)
         ? CPDF_OCContext::kPrint
         : CPDF_OCContext::kView;
-    pContext->options_->SetOCContext(pdfium::MakeRetain<GDALPDFiumOCContext>(
+    pContext->m_pOptions->SetOCContext(pdfium::MakeRetain<GDALPDFiumOCContext>(
         poDS, pPage->GetDocument(), usage));
 
-    pContext->device_->SaveState();
-    pContext->device_->SetBaseClip(clipping_rect);
-    pContext->device_->SetClip_Rect(clipping_rect);
-    pContext->context_ = std::make_unique<CPDF_RenderContext>(
+    pContext->m_pDevice->SaveState();
+    pContext->m_pDevice->SetBaseClip(clipping_rect);
+    pContext->m_pDevice->SetClip_Rect(clipping_rect);
+    pContext->m_pContext = std::make_unique<CPDF_RenderContext>(
         pPage->GetDocument(), pPage->GetMutablePageResources(),
         pPage->GetPageImageCache());
 
-    pContext->context_->AppendLayer(pPage, matrix);
+    pContext->m_pContext->AppendLayer(pPage, matrix);
 
     if (flags & FPDF_ANNOT)
     {
         auto pOwnedList = std::make_unique<CPDF_AnnotList>(pPage);
         CPDF_AnnotList* pList = pOwnedList.get();
-        pContext->annots_ = std::move(pOwnedList);
+        pContext->m_pAnnots = std::move(pOwnedList);
         bool bPrinting =
-            pContext->device_->GetDeviceType() != DeviceType::kDisplay;
+            pContext->m_pDevice->GetDeviceType() != DeviceType::kDisplay;
 
         // TODO(https://crbug.com/pdfium/993) - maybe pass true here.
         const bool bShowWidget = false;
-        pList->DisplayAnnots(pContext->context_.get(), bPrinting, matrix,
+        pList->DisplayAnnots(pContext->m_pContext.get(), bPrinting, matrix,
             bShowWidget);
     }
 
-    pContext->renderer_ = std::make_unique<CPDF_ProgressiveRenderer>(
-        pContext->context_.get(), pContext->device_.get(),
-        pContext->options_.get());
-    pContext->renderer_->Start(pause);
+    pContext->m_pRenderer = std::make_unique<CPDF_ProgressiveRenderer>(
+        pContext->m_pContext.get(), pContext->m_pDevice.get(),
+        pContext->m_pOptions.get());
+    pContext->m_pRenderer->Start(pause);
     if (bNeedToRestore)
-        pContext->device_->RestoreState(false);
+        pContext->m_pDevice->RestoreState(false);
 }
 
 static void
@@ -1849,7 +1849,7 @@ void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page,
 
     auto pOwnedDevice = std::make_unique<MyRenderDevice>();
     auto pDevice = pOwnedDevice.get();
-    pContext->device_ = std::move(pOwnedDevice);
+    pContext->m_pDevice = std::move(pOwnedDevice);
 
     RetainPtr<CFX_DIBitmap> pBitmap(CFXDIBitmapFromFPDFBitmap(bitmap));
 
