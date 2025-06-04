@@ -1,12 +1,31 @@
 project "gdal"
 
-dofile(_BUILD_DIR .. "/static_library.lua")
+dofile(_BUILD_DIR .. "/shared_library.lua")
 
 configuration { "*" }
 
 uuid "B6ED8CCA-6592-4807-BFFD-247A379C395B"
 
 flags { "NoPCH" }
+
+links {
+  "expat",
+  "giflib",
+  "freetype",
+  "icu",
+  "jpeg",
+  "kakadu",
+  "lerc",
+  "mrsid",
+  "openjpeg",
+  "pdfium",
+  "png",
+  "sqlite",
+  "tiff",
+  "zlib-ng",
+
+  "Ws2_32",
+}
 
 defines {
   -- "AERONAVFAA_ENABLED",
