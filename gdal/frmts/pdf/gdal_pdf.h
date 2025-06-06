@@ -197,7 +197,6 @@ class PDFDataset final: public GDALPamDataset
     int          bGeoTransformValid;
     int          nGCPCount;
     GDAL_GCP    *pasGCPList;
-    std::vector<GDAL_GCP> rtcGCPS; // used for exposing GCPs to RuntimeCore
     int          bProjDirty;
     int          bNeatLineDirty;
 
