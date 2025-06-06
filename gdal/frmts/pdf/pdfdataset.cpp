@@ -6554,6 +6554,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
         bReproject = FALSE;
     }
 
+    // Bypass reprojection here as runtime does not use PROJ
     // OGRCoordinateTransformation* poCT = nullptr;
     // if (bReproject)
     // {
@@ -6584,6 +6585,8 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
         double lon = adfGPTS[2*i+1];
         double x = lon;
         double y = lat;
+
+        // Bypass reprojection here as runtime does not use PROJ
         // if (bReproject)
         // {
         //     if (!poCT->Transform(1, &x, &y, nullptr))
