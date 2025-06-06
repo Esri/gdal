@@ -1,4 +1,5 @@
 project "gdal_ge"
+test
 
 dofile(_BUILD_DIR .. "/static_library.lua")
 
