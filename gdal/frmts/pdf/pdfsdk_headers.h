@@ -114,11 +114,35 @@
 #endif
 
 #include <cstring>
-//#include <fpdfsdk/include/fsdk_define.h>
-#include <fpdfview.h>
-#include <core/include/fpdfapi/fpdf_page.h>
-#include <core/include/fpdfapi/fpdf_objects.h>
-#include "fpdfsdk/include/fsdk_rendercontext.h"
+#include "core/fpdfdoc/cpdf_annotlist.h"
+
+#include "core/fpdfapi/parser/cpdf_document.h"
+#include "core/fpdfapi/parser/cpdf_object.h"
+#include "core/fpdfapi/parser/cpdf_number.h"
+#include "core/fpdfapi/parser/cpdf_array.h"
+#include "core/fpdfapi/parser/cpdf_stream.h"
+#include "core/fpdfapi/parser/cpdf_stream_acc.h"
+
+#include "core/fpdfapi/page/cpdf_page.h"
+#include "core/fpdfapi/page/cpdf_occontext.h"
+
+#include "core/fpdfapi/render/cpdf_rendercontext.h"
+#include "core/fpdfapi/render/cpdf_renderoptions.h"
+#include "core/fpdfapi/render/cpdf_pagerendercontext.h"
+#include "core/fpdfapi/render/cpdf_progressiverenderer.h"
+
+#include "core/fxcrt/fx_string.h"
+#include "core/fxcrt/retain_ptr.h"
+
+#include "core/fxge/cfx_renderdevice.h"
+#include "core/fxge/renderdevicedriver_iface.h"
+#include "core/fxge/agg/cfx_agg_devicedriver.h"
+#include "core/fxge/dib/cfx_dibitmap.h"
+#include "core/fxge/agg/cfx_agg_imagerenderer.h"
+
+#include "fpdfsdk/cpdfsdk_helpers.h"
+#include "fpdfsdk/cpdfsdk_pauseadapter.h"
+
 #endif // HAVE_PDFIUM
 
 #endif

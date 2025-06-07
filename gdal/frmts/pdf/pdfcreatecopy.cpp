@@ -376,7 +376,7 @@ void GDALPDFWriter::UpdateXMP(GDALDataset* poSrcDS,
     GDALPDFObject* poMetadata = poCatalogDict->Get("Metadata");
     if (poMetadata)
     {
-        nXMPId = poMetadata->GetRefNum();
+        nXMPId = poMetadata->GetRefNum().toInt();
         nXMPGen = poMetadata->GetRefGen();
     }
 
@@ -3987,7 +3987,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
          .Add("Width", nReqXSize)
          .Add("Height", nReqYSize)
          .Add("ColorSpace",
-              (nColorTableId != 0) ? GDALPDFObjectRW::CreateIndirect(nColorTableId, 0) :
+              (nColorTableId != 0) ? GDALPDFObjectRW::CreateIndirect(GDALPDFObjectNum(nColorTableId), 0) :
               (nBands == 1) ?        GDALPDFObjectRW::CreateName("DeviceGray") :
                                      GDALPDFObjectRW::CreateName("DeviceRGB"))
          .Add("BitsPerComponent", 8);
