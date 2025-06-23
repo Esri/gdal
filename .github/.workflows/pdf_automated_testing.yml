@@ -1,0 +1,22 @@
+name: Build and Test PDF C++ Unit Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: Build the Solution
+        run: msbuild gdal-unit-tests.sln /p:Configuration=Debug /p:Platform=x64
+
+      - name: Run Unit Tests
+        run: |
+          vstest.console.exe gdal\frmts\pdf\unittest\x64\Debug\pdf_unittest.dll /logger:trx
