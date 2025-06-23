@@ -328,6 +328,71 @@ PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"Meter
         }
     };
 
+    TEST_CLASS(Tests_gdal_extras) {
+
+        TEST_METHOD(Test_ReadMetadataFields)
+        {
+            GDALAllRegister();
+            const char* filename = "../../testdata/hambertfield_geopdf.pdf";
+            GDALDatasetH dataset = GDALOpen(filename, GA_ReadOnly);
+            Assert::IsNotNull(dataset);
+
+            const char* author = GDALGetMetadataItem(dataset, "AUTHOR", NULL);
+            const char* creator = GDALGetMetadataItem(dataset, "CREATOR", NULL);
+
+            if (author) Logger::WriteMessage((std::string("Author: ") + author).c_str());
+            if (creator) Logger::WriteMessage((std::string("Creator: ") + creator).c_str());
+
+            GDALClose(dataset);
+        }
+
+        TEST_METHOD(Test_CheckGeoPDFLayers)
+        {
+            GDALAllRegister();
+
+            const char* filepath = "../../testdata/hambertfield_geopdf.pdf";
+
+            GDALDataset* poDS = static_cast<GDALDataset*>(GDALOpenEx(
+                filepath,
+                GDAL_OF_VECTOR | GDAL_OF_READONLY,
+                nullptr, nullptr, nullptr
+            ));
+
+            Assert::IsNotNull(poDS, L"Failed to open GeoPDF as vector");
+
+            int layerCount = poDS->GetLayerCount();
+            Logger::WriteMessage(string_format("Total Layers Found: %d\n", layerCount).c_str());
+            Assert::IsTrue(layerCount > 0, L"No layers found in GeoPDF!");
+
+            for (int i = 0; i < layerCount; ++i)
+            {
+                OGRLayer* poLayer = poDS->GetLayer(i);
+                Assert::IsNotNull(static_cast<void*>(poLayer), L"Layer is null");
+
+                const char* layerName = poLayer->GetName();
+                Logger::WriteMessage(string_format("Layer %d: %s\n", i, layerName).c_str());
+            }
+
+            GDALClose(poDS);
+        }
+
+        TEST_METHOD(Test_CheckGCPsIfPresent)
+        {
+            GDALAllRegister();
+            const char* filename = "../../testdata/Map_1-Ross-County-Ohio.pdf";
+            GDALDatasetH dataset = GDALOpen(filename, GA_ReadOnly);
+            Assert::IsNotNull(dataset);
+
+            int gcpCount = GDALGetGCPCount(dataset);
+            if (gcpCount > 0) {
+                const GDAL_GCP* gcps = GDALGetGCPs(dataset);
+                Assert::IsNotNull(gcps);
+            }
+            GDALClose(dataset);
+        }
+
+    };
+
     // todo: extract test class into new file
     TEST_CLASS(Tests__gdal_translate_exe)
     {
