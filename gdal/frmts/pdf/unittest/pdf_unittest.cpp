@@ -7,19 +7,12 @@
 #include <memory>
 #include <string>
 #include <stdexcept>
+#include <chrono>
 
-template<typename ... Args>
-std::string string_format(const std::string& format, Args ... args)
-{
-    int size_s = std::snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
-    if (size_s <= 0) { throw std::runtime_error("Error during formatting."); }
-    auto size = static_cast<size_t>(size_s);
-    std::unique_ptr<char[]> buf(new char[size]);
-    std::snprintf(buf.get(), size, format.c_str(), args ...);
-    return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
-}
-
-#include "gdal/gcore/gdal.h"
+#include "gdal/gdal.h"
+#include "gdal/gdal_priv.h"
+#include "ogr/ogrsf_frmts.h"
+#include "test_utilities.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -390,6 +383,46 @@ PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"Meter
             }
             GDALClose(dataset);
         }
+
+        TEST_METHOD(Test_Performance_LoadingPDF)
+        {
+            const char* pdf_path = "../../testdata/hambertfield_geopdf.pdf";
+
+            GDALAllRegister();
+
+            auto start_time = std::chrono::high_resolution_clock::now();
+
+            GDALDatasetH hDataset = GDALOpen(pdf_path, GA_ReadOnly);
+            Assert::IsNotNull(hDataset, L"Failed to open GeoPDF");
+
+            // Optionally force rendering or text extraction simulation:
+            int nBands = GDALGetRasterCount(hDataset);
+            for (int i = 1; i <= nBands; ++i)
+            {
+                GDALRasterBandH hBand = GDALGetRasterBand(hDataset, i);
+                Assert::IsNotNull(hBand, L"Failed to get raster band");
+
+                int nXSize = GDALGetRasterBandXSize(hBand);
+                int nYSize = GDALGetRasterBandYSize(hBand);
+                std::vector<float> buffer(nXSize);
+
+                for (int y = 0; y < nYSize; ++y)
+                {
+                    GDALRasterIO(hBand, GF_Read, 0, y, nXSize, 1, buffer.data(), nXSize, 1, GDT_Float32, 0, 0);
+                }
+            }
+
+            GDALClose(hDataset);
+
+            auto end_time = std::chrono::high_resolution_clock::now();
+            double elapsed_sec = std::chrono::duration<double>(end_time - start_time).count();
+
+            std::wstring msg = L"GeoPDF loading time: " + std::to_wstring(elapsed_sec) + L" seconds";
+            Logger::WriteMessage(msg.c_str());
+
+            Assert::IsTrue(elapsed_sec < 5.0, L"Performance test failed (loading too slow)");
+        }
+
 
     };
 
