@@ -578,31 +578,34 @@ PDFRasterBand::PDFRasterBand( PDFDataset *poDSIn, int nBandIn,
     nBand = nBandIn;
 
     eDataType = GDT_Byte;
+#if 0
+    if (nResolutionLevel > 0)
+    {
+        nBlockXSize = 256;
+        nBlockYSize = 256;
+        poDSIn->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    }
+    else if (poDSIn->nBlockXSize)
+    {
+        nBlockXSize = poDSIn->nBlockXSize;
+        nBlockYSize = poDSIn->nBlockYSize;
+    }
+    else if (poDSIn->GetRasterXSize() < 64 * 1024 * 1024 / poDSIn->GetRasterYSize())
+    {
+        nBlockXSize = poDSIn->GetRasterXSize();
+        nBlockYSize = 1;
+    }
+    else
+    {
+        nBlockXSize = std::min(256, poDSIn->GetRasterXSize());
+        nBlockYSize = std::min(256, poDSIn->GetRasterYSize());
+        poDSIn->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    }
+#else
+    // default to 256 to use uniform block sizes at any LOD for
     nBlockXSize = 256;
     nBlockYSize = 256;
-
-    // if( nResolutionLevel > 0 )
-    // {
-    //     nBlockXSize = 256;
-    //     nBlockYSize = 256;
-    //     poDSIn->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
-    // }
-    // else if( poDSIn->nBlockXSize )
-    // {
-    //     nBlockXSize = poDSIn->nBlockXSize;
-    //     nBlockYSize = poDSIn->nBlockYSize;
-    // }
-    // else if( poDSIn->GetRasterXSize() < 64 * 1024 * 1024 / poDSIn->GetRasterYSize() )
-    // {
-    //     nBlockXSize = poDSIn->GetRasterXSize();
-    //     nBlockYSize = 1;
-    // }
-    // else
-    // {
-    //     nBlockXSize = std::min(256, poDSIn->GetRasterXSize());
-    //     nBlockYSize = std::min(256, poDSIn->GetRasterYSize());
-    //     poDSIn->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
-    // }
+#endif
 }
 
 /************************************************************************/
