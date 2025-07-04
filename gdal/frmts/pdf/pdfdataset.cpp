@@ -578,7 +578,7 @@ PDFRasterBand::PDFRasterBand( PDFDataset *poDSIn, int nBandIn,
     nBand = nBandIn;
 
     eDataType = GDT_Byte;
-
+#if 0
     if( nResolutionLevel > 0 )
     {
         nBlockXSize = 256;
@@ -601,6 +601,11 @@ PDFRasterBand::PDFRasterBand( PDFDataset *poDSIn, int nBandIn,
         nBlockYSize = std::min(1024, poDSIn->GetRasterYSize());
         poDSIn->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
+#else
+    // default to 256 to use uniform block sizes at any LOD
+    nBlockXSize = 256;
+    nBlockYSize = 256;
+#endif
 }
 
 /************************************************************************/
