@@ -602,7 +602,7 @@ PDFRasterBand::PDFRasterBand( PDFDataset *poDSIn, int nBandIn,
         poDSIn->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
 #else
-    // default to 256 to use uniform block sizes at any LOD for
+    // default to 256 to use uniform block sizes at any LOD
     nBlockXSize = 256;
     nBlockYSize = 256;
 #endif
