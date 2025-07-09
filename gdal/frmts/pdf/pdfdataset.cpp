@@ -5820,7 +5820,8 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
             oSRS.SetStatePlane( nZone, bIsNAD83 );
         }
 
-        // convert to meters if not already in meters to be consistent with the case of reading units from pdf
+        // The false easting/northing units are in the units of gdal's projection data (and not read from the PDF like the other projections).
+        // Since the geotransform is always in meters, convert the units to meters if they are not already in meters.
         const char* linearUnits = oSRS.GetAttrValue("UNIT");
         if (linearUnits && !EQUAL(linearUnits, SRS_UL_METER))
         {
@@ -5835,7 +5836,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
             }
             else
             {
-                CPLDebug("PDF", "Unhandled unit from EPSG: %s", linearUnits);
+                CPLDebug("PDF", "Unhandled unit: %s", linearUnits);
             }
         }
 
@@ -6158,10 +6159,9 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
         osUnits = poUnits->GetString();
         CPLDebug("PDF", "Projection.Units = %s", osUnits.c_str());
 
-        // This is super weird. The false easting/northing of the SRS
-        // are expressed in the unit, but the geotransform is expressed in
-        // meters. Hence this hack to have an equivalent SRS definition, but
-        // with linear units converted in meters.
+        // The units of the false easting/northing are specified in the Units attribute that was read from
+        // the PDF. However the geotransform is always expressed in meters.
+        // This first sets the units to those read from the PDF file, then transforms those units to meters.
         if (EQUAL(osUnits, "M"))
             oSRS.SetLinearUnits( "Meter", 1.0 );
         else if (EQUAL(osUnits, "FT"))
