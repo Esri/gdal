@@ -5789,6 +5789,71 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
     CPLString osProjectionType(poProjectionType->GetString());
     CPLDebug("PDF", "Projection.ProjectionType = %s", osProjectionType.c_str());
 
+    if (EQUAL(osProjectionType, "UT") || 
+        EQUAL(osProjectionType, "UP") || 
+        EQUAL(osProjectionType, "SPCS"))
+    {
+
+        if (EQUAL(osProjectionType, "UT")) /* UTM */
+        {
+            int nZone = (int)Get(poProjDict, "Zone");
+            int bNorth = EQUAL(osHemisphere, "N");
+            if (bIsWGS84)
+                oSRS.importFromEPSG( ((bNorth) ? 32600 : 32700) + nZone );
+            else
+                oSRS.SetUTM( nZone, bNorth );
+        }
+
+        else if (EQUAL(osProjectionType, "UP")) /* Universal Polar Stereographic (UPS) */
+        {
+            int bNorth = EQUAL(osHemisphere, "N");
+            if (bIsWGS84)
+                oSRS.importFromEPSG( (bNorth) ? 32661 : 32761 );
+            else
+                oSRS.SetPS( (bNorth) ? 90 : -90, 0,
+                            0.994, 200000, 200000 );
+        }
+
+        else if (EQUAL(osProjectionType, "SPCS")) /* State Plane */
+        {
+            int nZone = (int)Get(poProjDict, "Zone");
+            oSRS.SetStatePlane( nZone, bIsNAD83 );
+        }
+
+        // convert to meters if not already in meters to be consistent with the case of reading units from pdf
+        const char* linearUnits = oSRS.GetAttrValue("UNIT");
+        if (linearUnits && !EQUAL(linearUnits, SRS_UL_METER))
+        {
+            if (EQUAL(linearUnits, "metre"))
+            {
+                // update name for consistency
+                oSRS.SetLinearUnits( "Meter", 1.0 );
+            }
+            else if (EQUAL(linearUnits, "foot") || EQUAL(linearUnits, SRS_UL_US_FOOT))
+            {
+                oSRS.SetLinearUnitsAndUpdateParameters( "Meter", 1.0 );
+            }
+            else
+            {
+                CPLDebug("PDF", "Unhandled unit from EPSG: %s", linearUnits);
+            }
+        }
+
+
+        /* -------------------------------------------------------------------- */
+        /*      Export SpatialRef                                               */
+        /* -------------------------------------------------------------------- */
+            CPLFree(pszWKT);
+            pszWKT = nullptr;
+            if (oSRS.exportToWkt(&pszWKT) != OGRERR_NONE)
+            {
+                CPLFree(pszWKT);
+                pszWKT = nullptr;
+            }
+
+            return TRUE;
+    }
+
     /* Unhandled: NONE, GEODETIC */
 
     if (EQUAL(osProjectionType, "GEOGRAPHIC"))
@@ -5797,32 +5862,6 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
     }
 
     /* Unhandled: LOCAL CARTESIAN, MG (MGRS) */
-
-    else if (EQUAL(osProjectionType, "UT")) /* UTM */
-    {
-        int nZone = (int)Get(poProjDict, "Zone");
-        int bNorth = EQUAL(osHemisphere, "N");
-        if (bIsWGS84)
-            oSRS.importFromEPSG( ((bNorth) ? 32600 : 32700) + nZone );
-        else
-            oSRS.SetUTM( nZone, bNorth );
-    }
-
-    else if (EQUAL(osProjectionType, "UP")) /* Universal Polar Stereographic (UPS) */
-    {
-        int bNorth = EQUAL(osHemisphere, "N");
-        if (bIsWGS84)
-            oSRS.importFromEPSG( (bNorth) ? 32661 : 32761 );
-        else
-            oSRS.SetPS( (bNorth) ? 90 : -90, 0,
-                        0.994, 200000, 200000 );
-    }
-
-    else if (EQUAL(osProjectionType, "SPCS")) /* State Plane */
-    {
-        int nZone = (int)Get(poProjDict, "Zone");
-        oSRS.SetStatePlane( nZone, bIsNAD83 );
-    }
 
     else if (EQUAL(osProjectionType, "AC")) /* Albers Equal Area Conic */
     {
