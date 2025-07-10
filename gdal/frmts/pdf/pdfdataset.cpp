@@ -5821,7 +5821,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
         }
 
         // The false easting/northing units are in the units of gdal's projection data (and not read from the PDF like the other projections).
-        // Since the geotransform is always in meters, convert the units to meters if they are not already in meters.
+        // Since the geotransform is expressed in meters, convert the units to meters if they are not already in meters.
         const char* linearUnits = oSRS.GetAttrValue("UNIT");
         if (linearUnits && !EQUAL(linearUnits, SRS_UL_METER))
         {
@@ -6160,7 +6160,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
         CPLDebug("PDF", "Projection.Units = %s", osUnits.c_str());
 
         // The units of the false easting/northing are specified in the Units attribute that was read from
-        // the PDF. However the geotransform is always expressed in meters.
+        // the PDF. However the geotransform is expressed in meters.
         // This first sets the units to those read from the PDF file, then transforms those units to meters.
         if (EQUAL(osUnits, "M"))
             oSRS.SetLinearUnits( "Meter", 1.0 );
