@@ -5789,7 +5789,14 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
     CPLString osProjectionType(poProjectionType->GetString());
     CPLDebug("PDF", "Projection.ProjectionType = %s", osProjectionType.c_str());
 
-    if (EQUAL(osProjectionType, "UT") || 
+    /* Unhandled: NONE, GEODETIC */
+
+    if (EQUAL(osProjectionType, "GEOGRAPHIC"))
+    {
+        /* Nothing to do */
+    }
+
+    else if (EQUAL(osProjectionType, "UT") || 
         EQUAL(osProjectionType, "UP") || 
         EQUAL(osProjectionType, "SPCS"))
     {
@@ -5853,13 +5860,6 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
             }
 
             return TRUE;
-    }
-
-    /* Unhandled: NONE, GEODETIC */
-
-    if (EQUAL(osProjectionType, "GEOGRAPHIC"))
-    {
-        /* Nothing to do */
     }
 
     /* Unhandled: LOCAL CARTESIAN, MG (MGRS) */
