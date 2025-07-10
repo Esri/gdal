@@ -5800,6 +5800,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
         EQUAL(osProjectionType, "UP") || 
         EQUAL(osProjectionType, "SPCS"))
     {
+        /* Unhandled: LOCAL CARTESIAN, MG (MGRS) */
 
         if (EQUAL(osProjectionType, "UT")) /* UTM */
         {
@@ -5861,8 +5862,6 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
 
             return TRUE;
     }
-
-    /* Unhandled: LOCAL CARTESIAN, MG (MGRS) */
 
     else if (EQUAL(osProjectionType, "AC")) /* Albers Equal Area Conic */
     {
