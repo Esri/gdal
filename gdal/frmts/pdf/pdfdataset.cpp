@@ -5796,32 +5796,71 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
         /* Nothing to do */
     }
 
-    /* Unhandled: LOCAL CARTESIAN, MG (MGRS) */
-
-    else if (EQUAL(osProjectionType, "UT")) /* UTM */
+    else if (EQUAL(osProjectionType, "UT") || 
+        EQUAL(osProjectionType, "UP") || 
+        EQUAL(osProjectionType, "SPCS"))
     {
-        int nZone = (int)Get(poProjDict, "Zone");
-        int bNorth = EQUAL(osHemisphere, "N");
-        if (bIsWGS84)
-            oSRS.importFromEPSG( ((bNorth) ? 32600 : 32700) + nZone );
-        else
-            oSRS.SetUTM( nZone, bNorth );
-    }
+        /* Unhandled: LOCAL CARTESIAN, MG (MGRS) */
 
-    else if (EQUAL(osProjectionType, "UP")) /* Universal Polar Stereographic (UPS) */
-    {
-        int bNorth = EQUAL(osHemisphere, "N");
-        if (bIsWGS84)
-            oSRS.importFromEPSG( (bNorth) ? 32661 : 32761 );
-        else
-            oSRS.SetPS( (bNorth) ? 90 : -90, 0,
-                        0.994, 200000, 200000 );
-    }
+        if (EQUAL(osProjectionType, "UT")) /* UTM */
+        {
+            int nZone = (int)Get(poProjDict, "Zone");
+            int bNorth = EQUAL(osHemisphere, "N");
+            if (bIsWGS84)
+                oSRS.importFromEPSG( ((bNorth) ? 32600 : 32700) + nZone );
+            else
+                oSRS.SetUTM( nZone, bNorth );
+        }
 
-    else if (EQUAL(osProjectionType, "SPCS")) /* State Plane */
-    {
-        int nZone = (int)Get(poProjDict, "Zone");
-        oSRS.SetStatePlane( nZone, bIsNAD83 );
+        else if (EQUAL(osProjectionType, "UP")) /* Universal Polar Stereographic (UPS) */
+        {
+            int bNorth = EQUAL(osHemisphere, "N");
+            if (bIsWGS84)
+                oSRS.importFromEPSG( (bNorth) ? 32661 : 32761 );
+            else
+                oSRS.SetPS( (bNorth) ? 90 : -90, 0,
+                            0.994, 200000, 200000 );
+        }
+
+        else if (EQUAL(osProjectionType, "SPCS")) /* State Plane */
+        {
+            int nZone = (int)Get(poProjDict, "Zone");
+            oSRS.SetStatePlane( nZone, bIsNAD83 );
+        }
+
+        // The false easting/northing units are in the units of gdal's projection data (and not read from the PDF like the other projections).
+        // Since the geotransform is expressed in meters, convert the units to meters if they are not already in meters.
+        const char* linearUnits = oSRS.GetAttrValue("UNIT");
+        if (linearUnits && !EQUAL(linearUnits, SRS_UL_METER))
+        {
+            if (EQUAL(linearUnits, "metre"))
+            {
+                // update name for consistency
+                oSRS.SetLinearUnits( "Meter", 1.0 );
+            }
+            else if (EQUAL(linearUnits, "foot") || EQUAL(linearUnits, SRS_UL_US_FOOT))
+            {
+                oSRS.SetLinearUnitsAndUpdateParameters( "Meter", 1.0 );
+            }
+            else
+            {
+                CPLDebug("PDF", "Unhandled unit: %s", linearUnits);
+            }
+        }
+
+
+        /* -------------------------------------------------------------------- */
+        /*      Export SpatialRef                                               */
+        /* -------------------------------------------------------------------- */
+            CPLFree(pszWKT);
+            pszWKT = nullptr;
+            if (oSRS.exportToWkt(&pszWKT) != OGRERR_NONE)
+            {
+                CPLFree(pszWKT);
+                pszWKT = nullptr;
+            }
+
+            return TRUE;
     }
 
     else if (EQUAL(osProjectionType, "AC")) /* Albers Equal Area Conic */
@@ -6119,10 +6158,9 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
         osUnits = poUnits->GetString();
         CPLDebug("PDF", "Projection.Units = %s", osUnits.c_str());
 
-        // This is super weird. The false easting/northing of the SRS
-        // are expressed in the unit, but the geotransform is expressed in
-        // meters. Hence this hack to have an equivalent SRS definition, but
-        // with linear units converted in meters.
+        // The units of the false easting/northing are specified in the Units attribute that was read from
+        // the PDF. However the geotransform is expressed in meters.
+        // This first sets the units to those read from the PDF file, then transforms those units to meters.
         if (EQUAL(osUnits, "M"))
             oSRS.SetLinearUnits( "Meter", 1.0 );
         else if (EQUAL(osUnits, "FT"))
