@@ -580,8 +580,8 @@ PDFRasterBand::PDFRasterBand( PDFDataset *poDSIn, int nBandIn,
     eDataType = GDT_Byte;
     if( nResolutionLevel > 0 )
     {
-        nBlockXSize = 256;
-        nBlockYSize = 256;
+        nBlockXSize = 1024;
+        nBlockYSize = 1024;
         poDSIn->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
     else if( poDSIn->nBlockXSize )
