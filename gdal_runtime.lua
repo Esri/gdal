@@ -59,7 +59,7 @@ defines {
   "FRMT_iso8211",
   -- "FRMT_jaxapalsar",
   -- "FRMT_jdem",
-  "FRMT_jp2kak",
+  -- "FRMT_jp2kak",
   "FRMT_jpeg",
   -- "FRMT_jpipkak",
   -- "FRMT_kmlsuperoverlay",
@@ -190,7 +190,6 @@ includedirs {
   _3RDPARTY_DIR .. "/gdal/gdal/ogr/ogrsf_frmts/sqlite",
   _3RDPARTY_DIR .. "/gdal/gdal/port",
   _3RDPARTY_DIR .. "/giflib",
-  _3RDPARTY_DIR .. "/kakadu/include",
   _3RDPARTY_DIR .. "/libexpat/expat/lib",
   _3RDPARTY_DIR .. "/libjpeg-turbo",
   _3RDPARTY_DIR .. "/libpng",
@@ -375,7 +374,7 @@ files {
   "gdal/frmts/iso8211/ddfutils.cpp",
   -- "gdal/frmts/jaxapalsar/jaxapalsardataset.cpp",
   -- "gdal/frmts/jdem/jdemdataset.cpp",
-  "gdal/frmts/jp2kak/jp2kakdataset.cpp",
+  -- "gdal/frmts/jp2kak/jp2kakdataset.cpp",
   "gdal/frmts/jpeg/jpgdataset.cpp",
   "gdal/frmts/jpeg/vsidataio.cpp",
   -- "gdal/frmts/jpipkak/jpipkakdataset.cpp",
@@ -1041,17 +1040,9 @@ files {
   "gdal/port/cpl_xml_validate.cpp",
 }
 
-local neon_defines = {
-  "KDU_NEON_INTRINSICS", -- kakadu
-}
-
 local intel_intrinsic_defines = {
   "HAVE_SSE_AT_COMPILE_TIME", -- gdal
   "HAVE_SSSE3_AT_COMPILE_TIME",
-  "KDU_NO_AVX", -- kakadu
-  "KDU_NO_AVX2",
-  "KDU_NO_SSE4",
-  "KDU_X86_INTRINSICS",
 }
 
 local cocoa_defines = {
@@ -1059,24 +1050,8 @@ local cocoa_defines = {
 }
 
 if (_PLATFORM_ANDROID) then
-  defines {
-    "KDU_NO_THREADS", -- Android has very limited pthread support for our platforms.  Revisit later
-  }
-
   buildoptions {
     "-Wno-error=implicit-function-declaration", -- turn off clang 16+ warning that turned to error for ISO 99 calls
-  }
-
-  configuration { "*arm64*" }
-
-  defines {
-    "KDU_NO_NEON", -- neon intrinsic vqrdmlahq_s16 not available for arm64. Revisit later.
-  }
-
-  configuration { "*armv7*" }
-
-  defines {
-    "KDU_NO_NEON", -- neon intrinsic vcvtnq_s32_f32 not available for armv7. Revisit later.
   }
 
   configuration { "*x64*" }
@@ -1101,12 +1076,6 @@ if (_PLATFORM_IOS) then
     "-Wno-error=implicit-function-declaration", -- turn off clang 16+ warning that turned to error for ISO 99 calls
   }
 
-  configuration { "*arm64*" }
-
-  defines {
-    "KDU_NO_NEON", -- neon intrinsics for arm64 crash the compiler. Revisit later
-  }
-
   configuration { "*x64*" }
 
   defines {
@@ -1117,12 +1086,6 @@ end
 if (_PLATFORM_LINUX) then
   buildoptions {
     "-Wno-error=implicit-function-declaration", -- turn off clang 16+ warning that turned to error for ISO 99 calls
-  }
-
-  configuration { "ARM64" }
-
-  defines {
-    "KDU_NO_NEON", -- neon intrinsics for linux arm64 are not supported
   }
 
   configuration { "x64" }
@@ -1141,12 +1104,6 @@ if (_PLATFORM_MACOS) then
     "-Wno-error=implicit-function-declaration", -- turn off clang 16+ warning that turned to error for ISO 99 calls
   }
 
-  configuration { "ARM64" }
-
-  defines {
-    neon_defines,
-  }
-
   configuration { "x64" }
 
   defines {
@@ -1155,12 +1112,6 @@ if (_PLATFORM_MACOS) then
 end
 
 if (_PLATFORM_WINDOWS) then
-  configuration { "ARM64" }
-
-  defines {
-    "KDU_NO_NEON", -- neon intrinsics for Windows is not supported
-  }
-
   configuration { "x64" }
 
   defines {
@@ -1175,12 +1126,6 @@ if (_PLATFORM_WINDOWS) then
 end
 
 if (_PLATFORM_WINUWP) then
-  configuration { "ARM64" }
-
-  defines {
-    "KDU_NO_NEON", -- neon intrinsics for Windows is not supported
-  }
-
   configuration { "x64" }
 
   defines {
