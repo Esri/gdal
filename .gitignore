@@ -170,3 +170,33 @@ gdal/share
 /build
 CMakeSettings.json
 out/
+
+# RTC ignores
+# Premake generated files #
+###########################
+*.vcxproj*
+*.sln
+*.make
+Makefile
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.project
+
+# VS generated files #
+######################
+.cache
+ipch/
+*.suo
+*.opensdf
+*.sdf
+*.vcxproj
+*.filters
+*.user
