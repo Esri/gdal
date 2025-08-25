@@ -1,3 +1,7 @@
+# Esri instructions
+
+`cmake .. -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF -DOGR_BUILD_OPTIONAL_DRIVERS=OFF -DBUILD_APPS=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja`
+
 GDAL - Geospatial Data Abstraction Library
 ====
 
@@ -71,4 +75,3 @@ See [SECURITY.md](SECURITY.md)
 ### Citing GDAL/OGR in publications
 
 See [CITATION](CITATION) and [CITATION.cff](CITATION.cff)
-
