@@ -42,6 +42,12 @@
 #include "ogr_spatialref.h"
 #include "vrtdataset.h"
 
+//! @cond Doxygen_Suppress
+
+#ifndef _
+#define _(x) (x)
+#endif
+
 static void AttachMetadata(GDALDatasetH, const CPLStringList &);
 static void AttachDomainMetadata(GDALDatasetH, const CPLStringList &);
 
