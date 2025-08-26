@@ -1613,7 +1613,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
                                 CFX_Font *pFont,
                                 const CFX_Matrix &mtObject2Device,
                                 float font_size, uint32_t color,
-                                const CFX_TextRenderOptions &options) override
+                                const CFX_TextRenderOptions &options)
     {
         if (bEnableText)
         {
