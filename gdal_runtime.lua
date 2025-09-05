@@ -162,7 +162,7 @@ defines {
   -- "HAVE_LIBDEFLATE",
   "HAVE_LIBJPEG",
   -- "HAVE_LIBXML2",
-  -- "HAVE_LIBZ",
+  "HAVE_LIBZ",
   -- "HAVE_LZ4",
   -- "HAVE_LZMA",
   -- "HAVE_MITAB",
@@ -189,7 +189,7 @@ defines {
   -- "JPEG12_SUPPORTED",
   -- "JSONFG_ENABLED",
   -- "KML_ENABLED",
-  -- "LERC",
+  "LERC",
   "LERC_SUPPORT",
   -- "LIBDEFLATE_SUPPORT",
   -- "LVBAG_ENABLED",
@@ -307,7 +307,7 @@ includedirs {
   _3RDPARTY_DIR .. "/pdfium/public",
   _3RDPARTY_DIR .. "/PROJ/src",
   _3RDPARTY_DIR .. "/sqlite",
-  -- _3RDPARTY_DIR .. "/zlib-ng",
+  _3RDPARTY_DIR .. "/zlib-ng",
 }
 
 files {
@@ -1000,6 +1000,7 @@ files {
   -- "frmts/zlib/contrib/infback9/infback9.c",
   -- "frmts/zlib/contrib/infback9/inftree9.c",
   -- "frmts/zlib/contrib/infback9/minified_zutil.c",
+  "frmts/zlib/crc32.c",
   -- "frmts/zmap/zmapdataset.cpp",
 
   -- "gcore/gdal_adbc.cpp",
