@@ -101,7 +101,7 @@
 #define HAVE_GETCWD 1
 
 /* Define if you have the iconv() function and it works. */
-#define HAVE_ICONV 1
+/* #undef HAVE_ICONV */
 
 /* Define to 1 if the system has the type `__uint128_t'. */
 #define HAVE_UINT128_T 1
@@ -152,7 +152,7 @@
 #define HAVE_LSTAT 1
 
 /* For .cpp files, define as const if the declaration of iconv() needs const. */
-#define ICONV_CPP_CONST 
+#define ICONV_CPP_CONST
 
 /* Define for Mac OSX Framework build */
 /* #undef MACOSX_FRAMEWORK */
