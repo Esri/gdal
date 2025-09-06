@@ -319,10 +319,10 @@ defines {
   -- "GTFS_ENABLED",
   -- "GTIFF_USE_MMAP",
   -- "HAVE_CURL",
-  -- "HAVE_DECL_INFINITY",
-  -- "HAVE_DECL_ISINF",
-  -- "HAVE_DECL_ISNAN",
-  -- "HAVE_DECL_NAN",
+  "HAVE_DECL_INFINITY",
+  "HAVE_DECL_ISINF",
+  "HAVE_DECL_ISNAN",
+  "HAVE_DECL_NAN",
   "HAVE_EXPAT",
   -- "HAVE_GEOTIFF",
   -- "HAVE_ICONV",
@@ -435,7 +435,6 @@ defines {
   -- "USE_CPL",
   -- "USE_FILESYSTEM",
   -- "USE_IN_GDAL",
-  "USE_NEON_OPTIMIZATIONS",
   "USE_PNG",
   -- "VDV_ENABLED",
   -- "VFK_ENABLED",
@@ -811,7 +810,7 @@ files {
   "frmts/gtiff/libgeotiff/geo_normalize.c",
   -- "frmts/gtiff/libgeotiff/geo_print.c",
   "frmts/gtiff/libgeotiff/geo_set.c",
-  -- "frmts/gtiff/libgeotiff/geo_simpletags.c",
+  "frmts/gtiff/libgeotiff/geo_simpletags.c",
   "frmts/gtiff/libgeotiff/geo_tiffp.c",
   -- "frmts/gtiff/libgeotiff/geo_trans.c",
   "frmts/gtiff/libgeotiff/geo_write.c",
@@ -1765,6 +1764,7 @@ files {
 }
 
 local neon_defines = {
+  "USE_NEON_OPTIMIZATIONS", -- gdal
   "KDU_NEON_INTRINSICS", -- kakadu
 }
 
@@ -1838,10 +1838,6 @@ if (_PLATFORM_IOS) then
 end
 
 if (_PLATFORM_LINUX) then
-  -- buildoptions {
-  --   "-Wno-error=implicit-function"eclaration", -- turn off clang 16+ warning that turned to error for ISO 99 calls
-  -- }
-
   configuration { "ARM64" }
 
   defines {
