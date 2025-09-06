@@ -26,6 +26,9 @@ cmake .. \
   -DBUILD_APPS=OFF \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
   -G Ninja
+
+  # Extract unique defines
+  egrep -oh '\-D[a-Z_]* ' compile_commands.json | sort -u
 ```
 
 GDAL - Geospatial Data Abstraction Library
