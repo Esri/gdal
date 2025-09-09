@@ -242,6 +242,8 @@ CPLSpawnAsync(CPL_UNUSED int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
     HANDLE pipe_out[2] = {nullptr, nullptr};
     HANDLE pipe_err[2] = {nullptr, nullptr};
     CPLString osCommandLine;
+    std::wstring osCommandLineW; // wstring version of osCommandLine
+    size_t convertedChars = 0;
 
     HANDLE pipe_in[2] = {nullptr, nullptr};
     if (bCreateInputPipe)
@@ -309,7 +311,13 @@ CPLSpawnAsync(CPL_UNUSED int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
         }
     }
 
-    if (!CreateProcess(nullptr, const_cast<CHAR *>(osCommandLine.c_str()),
+    // RTC uses wstring for CreateProcess so convert the osCommandLine to the widestring version
+    osCommandLineW.resize(osCommandLine.length());
+    mbstowcs_s(&convertedChars, &osCommandLineW[0], osCommandLineW.size() + 1,
+               osCommandLine.c_str(),
+               osCommandLine.size());
+
+    if (!CreateProcess(nullptr, const_cast<WCHAR *>(osCommandLineW.c_str()),
                        nullptr,  // Process security attributes
                        nullptr,  // Primary thread security attributes
                        TRUE,     // Handles are inherited

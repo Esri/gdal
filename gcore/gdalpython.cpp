@@ -481,7 +481,7 @@ static bool LoadPythonAPI()
         else
 #endif
         {
-            libHandle = LoadLibrary(pszPythonSO);
+            libHandle = nullptr; // RTC doesn't support python so set to nullptr
         }
 
         SetErrorMode(uOldErrorMode);
@@ -600,7 +600,7 @@ static bool LoadPythonAPI()
             UINT uOldErrorMode;
             uOldErrorMode =
                 SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
-            libHandle = LoadLibrary(osDLLName.c_str());
+            libHandle = nullptr;
             SetErrorMode(uOldErrorMode);
             if (libHandle != nullptr)
             {
@@ -625,7 +625,7 @@ static bool LoadPythonAPI()
              libHandle == nullptr && i < CPL_ARRAYSIZE(apszPythonSO); ++i)
         {
             CPLDebug("GDAL", "Trying %s", apszPythonSO[i]);
-            libHandle = LoadLibrary(apszPythonSO[i]);
+            libHandle = nullptr;
             if (libHandle != nullptr)
                 CPLDebug("GDAL", "... success");
         }
