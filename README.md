@@ -27,6 +27,17 @@ cmake .. \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
   -G Ninja
 
+  cmake .. ^
+  -DBUILD_PYTHON_BINDINGS=OFF ^
+  -DGDAL_ENABLE_PLUGINS=OFF ^
+  -DBUILD_JAVA_BINDINGS=OFF ^
+  -DBUILD_CSHARP_BINDINGS=OFF ^
+  -DBUILD_APPS=OFF ^
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ^
+  -DPROJ_LIBRARY=C:/OSGeo4W/lib ^
+  -DPROJ_INCLUDE_DIR=C:/OSGeo4W/include ^
+  -G Ninja
+
   # Extract unique defines
   egrep -oh '\-D[a-Z_]* ' compile_commands.json | sort -u
 ```
