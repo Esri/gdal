@@ -188,7 +188,6 @@ flags { "NoPCH" }
 
 defines {
   "_XOPEN_SOURCE=700",
-  "CPL_DISABLE_DLL", -- define to prevent the library from defining the extern. Symbols in RTC are always hidden
   -- "ADBC_ENABLED",
   -- "AIVECTOR_ENABLED",
   -- "ALLOW_DEPRECATED_CPL_PATH_FUNCTIONS",
@@ -451,7 +450,7 @@ defines {
 -- defines from other 3rdparty libraries
 defines {
   "KDU_INCLUDE_TIFF", -- kakadu
-  "PROJ_DLL=", -- proj
+  --"PROJ_DLL=", -- proj
   "XML_STATIC", -- expat
 }
 
@@ -1744,6 +1743,7 @@ files {
   -- "port/cpl_vsil_swift.cpp",
   "port/cpl_vsil_tar.cpp",
   "port/cpl_vsil_unix_stdio_64.cpp",
+  -- "port/cpl_vsil_win32.cpp",
   -- "port/cpl_vsil_uploadonclose.cpp",
   -- "port/cpl_vsil_webhdfs.cpp",
   "port/cpl_vsil.cpp",

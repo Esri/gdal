@@ -202,7 +202,7 @@
 /* #undef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT */
 
 /* Define if building a static windows lib */
-/* #undef CPL_DISABLE_DLL */
+#define CPL_DISABLE_DLL 1
 
 /* Define to 1 if you have the <atlbase.h> header file. */
 #define HAVE_ATLBASE_H 1
