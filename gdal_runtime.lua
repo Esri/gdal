@@ -450,7 +450,7 @@ defines {
 -- defines from other 3rdparty libraries
 defines {
   "KDU_INCLUDE_TIFF", -- kakadu
-  --"PROJ_DLL=", -- proj
+  "PROJ_DLL=", -- proj
   "XML_STATIC", -- expat
 }
 
@@ -1743,7 +1743,7 @@ files {
   -- "port/cpl_vsil_swift.cpp",
   "port/cpl_vsil_tar.cpp",
   "port/cpl_vsil_unix_stdio_64.cpp",
-  -- "port/cpl_vsil_win32.cpp",
+  "port/cpl_vsil_win32.cpp",
   -- "port/cpl_vsil_uploadonclose.cpp",
   -- "port/cpl_vsil_webhdfs.cpp",
   "port/cpl_vsil.cpp",
