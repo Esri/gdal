@@ -188,6 +188,7 @@ flags { "NoPCH" }
 
 defines {
   "_XOPEN_SOURCE=700",
+  "CPL_DISABLE_DLL", -- define to prevent the library from defining the extern. Symbols in RTC are always hidden
   -- "ADBC_ENABLED",
   -- "AIVECTOR_ENABLED",
   -- "ALLOW_DEPRECATED_CPL_PATH_FUNCTIONS",
@@ -450,6 +451,7 @@ defines {
 -- defines from other 3rdparty libraries
 defines {
   "KDU_INCLUDE_TIFF", -- kakadu
+  "PROJ_DLL=", -- proj
   "XML_STATIC", -- expat
 }
 
@@ -1404,7 +1406,7 @@ files {
   -- "ogr/ogrsf_frmts/flatgeobuf/ogrflatgeobufeditablelayer.cpp",
   -- "ogr/ogrsf_frmts/flatgeobuf/ogrflatgeobuflayer.cpp",
   -- "ogr/ogrsf_frmts/flatgeobuf/packedrtree.cpp",
-  -- "ogr/ogrsf_frmts/generic/ogr_attrind.cpp",
+  "ogr/ogrsf_frmts/generic/ogr_attrind.cpp",
   "ogr/ogrsf_frmts/generic/ogr_gensql.cpp",
   -- "ogr/ogrsf_frmts/generic/ogr_miattrind.cpp",
   "ogr/ogrsf_frmts/generic/ograrrowarrayhelper.cpp",
@@ -1418,7 +1420,7 @@ files {
   -- "ogr/ogrsf_frmts/generic/ogrmutexeddatasource.cpp",
   -- "ogr/ogrsf_frmts/generic/ogrmutexedlayer.cpp",
   "ogr/ogrsf_frmts/generic/ogrregisterall.cpp",
-  -- "ogr/ogrsf_frmts/generic/ogrsfdriver.cpp",
+  "ogr/ogrsf_frmts/generic/ogrsfdriver.cpp",
   "ogr/ogrsf_frmts/generic/ogrsfdriverregistrar.cpp",
   "ogr/ogrsf_frmts/generic/ogrunionlayer.cpp",
   "ogr/ogrsf_frmts/generic/ogrwarpedlayer.cpp",
@@ -1680,7 +1682,7 @@ files {
   "port/cpl_base64.cpp",
   "port/cpl_compressor.cpp",
   "port/cpl_conv.cpp",
-  -- "port/cpl_cpu_features.cpp",
+  "port/cpl_cpu_features.cpp",
   "port/cpl_csv.cpp",
   "port/cpl_error.cpp",
   "port/cpl_findfile.cpp",

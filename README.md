@@ -8,6 +8,7 @@
 cmake .. \
   -DCMAKE_C_COMPILER=/usr/local/rtc/llvm/19.1.2/bin/clang \
   -DCMAKE_CXX_COMPILER=/usr/local/rtc/llvm/19.1.2/bin/clang++ \
+  -DBUILD_SHARED_LIBS=OFF \
   -DBUILD_PYTHON_BINDINGS=OFF \
   -DGDAL_ENABLE_PLUGINS=OFF \
   -DBUILD_JAVA_BINDINGS=OFF \
@@ -28,6 +29,7 @@ cmake .. \
   -G Ninja
 
   cmake .. ^
+  -DBUILD_SHARED_LIBS=OFF ^
   -DBUILD_PYTHON_BINDINGS=OFF ^
   -DGDAL_ENABLE_PLUGINS=OFF ^
   -DBUILD_JAVA_BINDINGS=OFF ^
