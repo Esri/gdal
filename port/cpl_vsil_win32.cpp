@@ -532,7 +532,7 @@ const char *CPLGetWineVersion();  // also used by cpl_aws.cpp
 
 const char *CPLGetWineVersion()
 {
-    HMODULE hntdll = GetModuleHandle("ntdll.dll");
+    HMODULE hntdll = GetModuleHandle(TEXT("ntdll.dll"));
     if (hntdll == nullptr)
     {
         CPLDebug("CPLGetWineVersion", "Can't get handle to ntdll.dll.");
@@ -827,7 +827,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open(const char *pszFilename,
     }
     else
     {
-        hFile = CreateFile(pszFilename, dwDesiredAccess,
+        hFile = CreateFileA(pszFilename, dwDesiredAccess,
                            bShared ? FILE_SHARE_READ | FILE_SHARE_WRITE : 0,
                            nullptr, dwCreationDisposition, dwFlagsAndAttributes,
                            nullptr);
@@ -1134,7 +1134,7 @@ GIntBig VSIWin32FilesystemHandler::GetDiskFreeSpace(const char *pszDirname)
 {
     GIntBig nRet = -1;
     ULARGE_INTEGER nFreeBytesAvailable;
-    if (GetDiskFreeSpaceEx(pszDirname, &nFreeBytesAvailable, nullptr, nullptr))
+    if (GetDiskFreeSpaceExA(pszDirname, &nFreeBytesAvailable, nullptr, nullptr))
     {
         nRet = static_cast<GIntBig>(nFreeBytesAvailable.QuadPart);
     }
@@ -1161,7 +1161,7 @@ int VSIWin32FilesystemHandler::SupportsSparseFiles(const char *pszPath)
         osPath.resize(3);
     }
 
-    GetVolumeInformation(osPath.c_str(), nullptr, 0, nullptr, nullptr,
+    GetVolumeInformationA(osPath.c_str(), nullptr, 0, nullptr, nullptr,
                          &dwVolFlags, nullptr, 0);
     return (dwVolFlags & FILE_SUPPORTS_SPARSE_FILES);
 }
@@ -1179,7 +1179,7 @@ bool VSIWin32FilesystemHandler::IsLocal(const char *pszPath)
         (osPath[2] == '\\' || osPath[2] == '/'))
     {
         osPath.resize(3);
-        return GetDriveType(osPath.c_str()) != DRIVE_REMOTE;
+        return GetDriveTypeA(osPath.c_str()) != DRIVE_REMOTE;
     }
     return true;
 }
