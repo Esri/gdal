@@ -1681,7 +1681,6 @@ files {
   "port/cpl_base64.cpp",
   "port/cpl_compressor.cpp",
   "port/cpl_conv.cpp",
-  "port/cpl_cpu_features.cpp",
   "port/cpl_csv.cpp",
   "port/cpl_error.cpp",
   "port/cpl_findfile.cpp",
@@ -1780,16 +1779,14 @@ local intel_intrinsic_defines = {
 
 local cocoa_defines = {
   "_DARWIN_C_SOURCE",
+  "HAVE_PREAD_BSD",
+  "SIZEOF_OFF_T=8",
 }
 
 if (_PLATFORM_ANDROID) then
   defines {
     "KDU_NO_THREADS", -- Android has very limited pthread support for our platforms.  Revisit later
   }
-
-  -- buildoptions {
-  --   "-Wno-error=implicit-function"eclaration", -- turn off clang 16+ warning that turned to error for ISO 99 calls
-  -- }
 
   configuration { "*arm64*" }
 
@@ -1820,10 +1817,6 @@ if (_PLATFORM_IOS) then
   defines {
     cocoa_defines,
   }
-
-  -- buildoptions {
-  --   "-Wno-error=implicit-function"eclaration", -- turn off clang 16+ warning that turned to error for ISO 99 calls
-  -- }
 
   configuration { "*arm64*" }
 
@@ -1857,10 +1850,6 @@ if (_PLATFORM_MACOS) then
     cocoa_defines,
   }
 
-  -- buildoptions {
-  --   "-Wno-error=implicit-function"eclaration", -- turn off clang 16+ warning that turned to error for ISO 99 calls
-  -- }
-
   configuration { "ARM64" }
 
   defines {
@@ -1875,6 +1864,10 @@ if (_PLATFORM_MACOS) then
 end
 
 if (_PLATFORM_WINDOWS) then
+  files {
+    "port/cpl_cpu_features.cpp",
+  }
+
   configuration { "ARM64" }
 
   defines {
@@ -1892,30 +1885,4 @@ if (_PLATFORM_WINDOWS) then
   defines {
     intel_intrinsic_defines,
   }
-end
-
-if (_PLATFORM_WINUWP) then
-  configuration { "ARM64" }
-
-  defines {
-    "KDU_NO_NEON", -- neon intrinsics for Windows is not supported
-  }
-
-  configuration { "x64" }
-
-  defines {
-    intel_intrinsic_defines,
-  }
-
-  configuration { "x32" }
-
-  defines {
-    intel_intrinsic_defines,
-  }
-
-  configuration { "Release" }
-
-  -- buildoptions {
-  --   "/wd4789", -- Silences buffer overrun warning which causes errors during LTCG with Ob3 optimizations on
-  -- }
 end
