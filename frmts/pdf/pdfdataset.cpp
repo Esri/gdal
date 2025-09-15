@@ -495,8 +495,8 @@ PDFRasterBand::PDFRasterBand(PDFDataset *poDSIn, int nBandIn,
 
     if (nResolutionLevel > 0)
     {
-        nBlockXSize = 256;
-        nBlockYSize = 256;
+        nBlockXSize = 1024;
+        nBlockYSize = 1024;
         poDSIn->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     }
     else if (poDSIn->m_nBlockXSize)
@@ -3746,7 +3746,7 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
                 }
                 else
                     osCurLayer = std::move(osName);
-                    // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
+                // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
 
 #if POPPLER_MAJOR_VERSION > 25 ||                                              \
     (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
