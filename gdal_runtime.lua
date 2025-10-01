@@ -126,7 +126,6 @@ defines {
   "INTERNAL_LIBGEOTIFF",
   -- "JML_ENABLED",
   "JPEG_SUPPORTED",
-  "KDU_INCLUDE_TIFF",
   -- "KML_ENABLED",
   "MEM_ENABLED",
   -- "MITAB_USE_OFTDATETIME", -- only enable if HAVE_MITAB is enabled
@@ -190,7 +189,12 @@ includedirs {
   _3RDPARTY_DIR .. "/gdal/gdal/ogr/ogrsf_frmts/sqlite",
   _3RDPARTY_DIR .. "/gdal/gdal/port",
   _3RDPARTY_DIR .. "/giflib",
-  _3RDPARTY_DIR .. "/kakadu/include",
+  _3RDPARTY_DIR .. "/kakadu/apps/compressed_io",
+  _3RDPARTY_DIR .. "/kakadu/apps/image",
+  _3RDPARTY_DIR .. "/kakadu/apps/jp2",
+  _3RDPARTY_DIR .. "/kakadu/apps/kdu_compress",
+  _3RDPARTY_DIR .. "/kakadu/apps/support",
+  _3RDPARTY_DIR .. "/kakadu/coresys/common",
   _3RDPARTY_DIR .. "/libexpat/expat/lib",
   _3RDPARTY_DIR .. "/libjpeg-turbo",
   _3RDPARTY_DIR .. "/libpng",
@@ -1041,28 +1045,29 @@ files {
   "gdal/port/cpl_xml_validate.cpp",
 }
 
-local neon_defines = {
-  "KDU_NEON_INTRINSICS", -- kakadu
-}
-
-local intel_intrinsic_defines = {
-  "HAVE_SSE_AT_COMPILE_TIME", -- gdal
-  "HAVE_SSSE3_AT_COMPILE_TIME",
-  "KDU_NO_AVX", -- kakadu
-  "KDU_NO_AVX2",
-  "KDU_NO_SSE4",
-  "KDU_X86_INTRINSICS",
-}
-
-local cocoa_defines = {
+local darwin_defines = {
   "_DARWIN_C_SOURCE",
 }
 
-if (_PLATFORM_ANDROID) then
-  defines {
-    "KDU_NO_THREADS", -- Android has very limited pthread support for our platforms.  Revisit later
-  }
+local neon_defines = {
+  -- kakadu
+  "KDU_NEON_INTRINSICS", -- Enable ARM NEON support
+  "KDU_NO_NEON81", -- Disable ARMv8.1-A Advanced SIMD (NEON) support
+}
 
+local ssse3_defines = {
+  -- gdal
+  "HAVE_SSE_AT_COMPILE_TIME",
+  "HAVE_SSSE3_AT_COMPILE_TIME",
+
+  -- kakadu
+  "KDU_NO_AVX", -- Disable AVX support
+  "KDU_NO_AVX2", -- Disable AVX2 support
+  "KDU_NO_SSE4", -- Disable SSE4 support
+  "KDU_X86_INTRINSICS", -- Enable x86 intrinsics up to SSSE3
+}
+
+if (_PLATFORM_ANDROID) then
   buildoptions {
     "-Wno-error=implicit-function-declaration", -- turn off clang 16+ warning that turned to error for ISO 99 calls
   }
@@ -1070,7 +1075,7 @@ if (_PLATFORM_ANDROID) then
   configuration { "*arm64*" }
 
   defines {
-    "KDU_NO_NEON", -- neon intrinsic vqrdmlahq_s16 not available for arm64. Revisit later.
+    neon_defines,
   }
 
   configuration { "*armv7*" }
@@ -1082,19 +1087,19 @@ if (_PLATFORM_ANDROID) then
   configuration { "*x64*" }
 
   defines {
-    intel_intrinsic_defines,
+    ssse3_defines,
   }
 
   configuration { "*x86*" }
 
   defines {
-    intel_intrinsic_defines,
+    ssse3_defines,
   }
 end
 
 if (_PLATFORM_IOS) then
   defines {
-    cocoa_defines,
+    darwin_defines,
   }
 
   buildoptions {
@@ -1104,13 +1109,13 @@ if (_PLATFORM_IOS) then
   configuration { "*arm64*" }
 
   defines {
-    "KDU_NO_NEON", -- neon intrinsics for arm64 crash the compiler. Revisit later
+    neon_defines,
   }
 
   configuration { "*x64*" }
 
   defines {
-    intel_intrinsic_defines,
+    ssse3_defines,
   }
 end
 
@@ -1122,19 +1127,19 @@ if (_PLATFORM_LINUX) then
   configuration { "ARM64" }
 
   defines {
-    "KDU_NO_NEON", -- neon intrinsics for linux arm64 are not supported
+    neon_defines,
   }
 
   configuration { "x64" }
 
   defines {
-    intel_intrinsic_defines,
+    ssse3_defines,
   }
 end
 
 if (_PLATFORM_MACOS) then
   defines {
-    cocoa_defines,
+    darwin_defines,
   }
 
   buildoptions {
@@ -1150,7 +1155,7 @@ if (_PLATFORM_MACOS) then
   configuration { "x64" }
 
   defines {
-    intel_intrinsic_defines,
+    ssse3_defines,
   }
 end
 
@@ -1158,44 +1163,14 @@ if (_PLATFORM_WINDOWS) then
   configuration { "ARM64" }
 
   defines {
-    "KDU_NO_NEON", -- neon intrinsics for Windows is not supported
+    "KDU_NO_THREADS", -- Disable threading support for arm64 that doesn't have access to _mm_pause
+    neon_defines,
   }
 
   configuration { "x64" }
 
   defines {
-    intel_intrinsic_defines,
-  }
-
-  configuration { "x32" }
-
-  defines {
-    intel_intrinsic_defines,
-  }
-end
-
-if (_PLATFORM_WINUWP) then
-  configuration { "ARM64" }
-
-  defines {
-    "KDU_NO_NEON", -- neon intrinsics for Windows is not supported
-  }
-
-  configuration { "x64" }
-
-  defines {
-    intel_intrinsic_defines,
-  }
-
-  configuration { "x32" }
-
-  defines {
-    intel_intrinsic_defines,
-  }
-
-  configuration { "Release" }
-
-  buildoptions {
-    "/wd4789", -- Silences buffer overrun warning which causes errors during LTCG with Ob3 optimizations on
+    "KDU_NO_CPUID_TEST", -- Disable runtime CPU feature detection which requires use of asm files that premake won't compile
+    ssse3_defines,
   }
 end

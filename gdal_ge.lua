@@ -126,7 +126,6 @@ defines {
   "INTERNAL_LIBGEOTIFF",
   -- "JML_ENABLED",
   "JPEG_SUPPORTED",
-  "KDU_INCLUDE_TIFF",
   -- "KML_ENABLED",
   "MEM_ENABLED",
   -- "MITAB_USE_OFTDATETIME", -- only enable if HAVE_MITAB is enabled
@@ -1036,13 +1035,13 @@ files {
   "gdal/port/cpl_xml_validate.cpp",
 }
 
-local intel_intrinsic_defines = {
-  "HAVE_SSE_AT_COMPILE_TIME", -- gdal
-  "HAVE_SSSE3_AT_COMPILE_TIME",
+local darwin_defines = {
+  "_DARWIN_C_SOURCE",
 }
 
-local cocoa_defines = {
-  "_DARWIN_C_SOURCE",
+local ssse3_defines = {
+  "HAVE_SSE_AT_COMPILE_TIME", -- gdal
+  "HAVE_SSSE3_AT_COMPILE_TIME",
 }
 
 if (_PLATFORM_ANDROID) then
@@ -1053,19 +1052,19 @@ if (_PLATFORM_ANDROID) then
   configuration { "*x64*" }
 
   defines {
-    intel_intrinsic_defines,
+    ssse3_defines,
   }
 
   configuration { "*x86*" }
 
   defines {
-    intel_intrinsic_defines,
+    ssse3_defines,
   }
 end
 
 if (_PLATFORM_IOS) then
   defines {
-    cocoa_defines,
+    darwin_defines,
   }
 
   buildoptions {
@@ -1075,7 +1074,7 @@ if (_PLATFORM_IOS) then
   configuration { "*x64*" }
 
   defines {
-    intel_intrinsic_defines,
+    ssse3_defines,
   }
 end
 
@@ -1087,13 +1086,13 @@ if (_PLATFORM_LINUX) then
   configuration { "x64" }
 
   defines {
-    intel_intrinsic_defines,
+    ssse3_defines,
   }
 end
 
 if (_PLATFORM_MACOS) then
   defines {
-    cocoa_defines,
+    darwin_defines,
   }
 
   buildoptions {
@@ -1103,7 +1102,7 @@ if (_PLATFORM_MACOS) then
   configuration { "x64" }
 
   defines {
-    intel_intrinsic_defines,
+    ssse3_defines,
   }
 end
 
@@ -1111,32 +1110,6 @@ if (_PLATFORM_WINDOWS) then
   configuration { "x64" }
 
   defines {
-    intel_intrinsic_defines,
-  }
-
-  configuration { "x32" }
-
-  defines {
-    intel_intrinsic_defines,
-  }
-end
-
-if (_PLATFORM_WINUWP) then
-  configuration { "x64" }
-
-  defines {
-    intel_intrinsic_defines,
-  }
-
-  configuration { "x32" }
-
-  defines {
-    intel_intrinsic_defines,
-  }
-
-  configuration { "Release" }
-
-  buildoptions {
-    "/wd4789", -- Silences buffer overrun warning which causes errors during LTCG with Ob3 optimizations on
+    ssse3_defines,
   }
 end
